@@ -1,3 +1,10 @@
+**********************
+note by Dan Scarafoni:
+This entire folder is just here in case we need to revert to older
+files, and for reference, you can IGNORE THIS FOLDER for most purposes
+**********************
+
+
 
 This README file is intended as a quick initial overview of the
 steps needed to run Gridworld and create new worlds (or as a 
