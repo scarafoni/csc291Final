@@ -17,13 +17,18 @@
 
 (defun set-blocked (l) (cond
   ((null l) nil)
-  (t (cons (lose-nth (random 15) (lose-nth (random 16) (car l)))  (set-blocked (cdr l))))
+  (t (cons (lose-nth (+ 1 (random 14)) (lose-nth (+ 1 (random 15)) (car l)))  (set-blocked (cdr l))))
 ))
 
+;; gets rid of nth member of list
 (defun lose-nth (n list)
+  (format t "lose-nth ~a, ~a~%" n list)
   (append (subseq list 0 (1- n)) (nthcdr n list)))
 
 (defun flatten (a) (cond
 	((null a) nil)
 	((atom (car a)) (cons (car a) (flatten (cdr a))))
 	(t (append (flatten (car a)) (flatten (cdr a))))))
+
+(defun make-block (l)
+  (flatten (set-blocked l)))
