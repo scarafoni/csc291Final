@@ -19,7 +19,6 @@
 
 ;; gets rid of nth member of list
 (defun lose-nth (n list)
-  (format t "lose-nth ~a, ~a~%" n list)
   (append (subseq list 0 (1- n)) (nthcdr n list)))
 
 (defun flatten (a) (cond
