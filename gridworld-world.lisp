@@ -72,12 +72,6 @@
                  (Ver19 Sas 1 Sbs 1 Scs 1 Sds 1 Ses 1 Sfs 1 Sgs 1 Shs 1 Sis 1 Sjs 1 Sks 1 Sls 1 Sms)
                  )))
 
-(def-object 'robot '(is_animate can_talk))
-(def-object 'expert '(is_animate can_talk))
-(def-object 'instrument '(is_inanimate is_playable))
-(def-object 'juice '(is_inanimate is_potable (has_cost 2.0)))
-(def-object 'pizza '(is_inanimate is_edible (has_cost 5.0)))
-
 ;; Note that we create some "current facts" about
 ;; AG that are really about the situation at plaza;
 ;; this is just a way of ensuring that AG knows these
