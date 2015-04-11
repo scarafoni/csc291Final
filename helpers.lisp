@@ -12,9 +12,6 @@
             (list row col))))
 
 
-(setq wall-list-raw '((Sbb Sbc Sbd Sbe Sbf Scb Scf Sdb Sdf Seb Sef Sfb Sfc Sfd Sfe Sff) (Sbh Sbi Sbj Sbk Sbl Sch Scl Sdh Sdl Seh Sel Sfh Sfi Sfj Sfk Sfl) (Sbn Sbo Sbp Sbq Sbr Scn Scr Sdn Sdr Sen Ser Sfn Sfo Sfp Sfq Sfr) (Shb Shc Shd She Shf Sib Sif Sjb Sjf Skb Skf Slb Slc Sld Sle Slf) (Shh Shi Shj Shk Shl Sih Sil Sjh Sjl Skh Skl Slh Sli Slj Slk Sll) (Shn Sho Shp Shq Shr Sin Sir Sjn Sjr Skn Skr Sln Slo Slp Slq Slr)))
-
-
 (defun set-blocked (l) (cond
   ((null l) nil)
   (t (cons (lose-nth (+ 1 (random 14)) (lose-nth (+ 1 (random 15)) (car l)))  (set-blocked (cdr l))))
