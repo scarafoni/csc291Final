@@ -76,15 +76,10 @@
 ;; AG that are really about the situation at plaza;
 ;; this is just a way of ensuring that AG knows these
 ;; facts right at the outset.
-(place-object 'AG 'robot 'home 0  
+(place-object 'AG 'Saa 0  
   nil ; no associated-things
   ; current facts
-  '((is_hungry_to_degree AG 4.0)
-	(is_thirsty_to_degree AG 2.0)
-    (is_tired_to_degree AG 0.0)
-    (can_talk guru)
-    (is_at guru grove)
-    (is_at juice3 plaza)  
+  '((is_scared_to_degree AG 4.0))
      ;Note that right after the call to function initialize-state-node, 
      ;AG knows (is_edible pizza3) and (is_playable piano2). The reason is
      ;AG knows the types of pizza3 and piano2 colocated with AG at home,
@@ -101,9 +96,7 @@
      ;simulated world and used by AG.
   ) 
   ; propositional attitudes
-  '((knows AG (whether (is_playable piano2)))
-    (knows AG (whether (is_edible pizza3)))
-    (knows AG (that (knows guru (whether (is_potable juice3))))) 
+  '((knows AG (that (can_open crowbar1 blocked_door1))))
     ;merely (knows guru (whether (is_potable juice3))) won't work, because (knows guru ...) is first
     ;deposited into *protected-facts* and *world-facts* via place-object, and then later filtered 
     ;to see if it should be known (added to local facts) to AG in initialize-state-node. And 
@@ -113,43 +106,28 @@
    )
 )
 
-(place-object 'pizza3 'pizza 'home 0 
+;; these have fixed locations for now
+(place-object 'zombie1 'zombie 'Sae 0 
 	nil ; no associated-things
 	; current facts
-	'((is_edible pizza3) 
-	 )
+	'((is_zombie zombie1))
     nil ; propositional attitudes
 )
 
-(place-object 'juice3 'juice 'plaza 0 
+(place-object 'zombie2 'zombie 'Saf 0 
 	nil ; no associated-things
 	; current facts
-	'((is_potable juice3) 
-	 )
+	'((is_zombie zombie2))
     nil ; propositional attitudes
 )
 
-(place-object 'piano2 'instrument 'home 0 
-	nil ; no associated-things
-	'((is_playable piano2)
-	 )
-    nil ; propositional attitudes
-)
-
-(place-object 'guru 'expert 'grove 0 
-	nil ; no associated-things
-    nil ; no current facts
-    ; propositional attitudes
-    '((knows guru (whether (is_potable juice3)))
-     )
-)
 
 ;(setq *occluded-preds* 
 ;    '(is_playable knows is_edible is_potable)
 ; We omit this, as *occluded-preds* is currently already set in 
 ; "gridworld-definitions.lisp".
 
-(setq *operators* '(walk eat answer_user_ynq answer_user_whq sleep drink ask+whether play))
+(setq *operators* '(move grab)) ;;walk eat answer_user_ynq answer_user_whq sleep drink ask+whether play))
 (setq *search-beam*
 ;(list (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) ))
 	(list (cons 5 *operators*) (cons 4 *operators*) (cons 3 *operators*) ))
@@ -320,6 +298,9 @@
 ;; initial fatigue level ?f, assuming speed of one unit per time step.
 ;; This is the `model' version.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;;;; A* -> MOVE (THIS IS THE MOVE WE CALL IN THE SECOND SPOT)
+;;;
 (setq walk 
 	(make-op :name 'walk :pars '(?x ?y ?z ?f)
 	:preconds '((is_at AG ?x)        
@@ -400,228 +381,4 @@
     	    (is_on (the_pt+units_from+towards+on_road? (- (distance_from+to+on? ?x ?y ?z) (* 1 (elapsed_time?))) ?y ?x ?z) ?z)
     		(is_tired_to_degree AG (+ ?f (* 0.5 (elapsed_time?)))) )
     )
-)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; With operator sleep, AG sleeps to relieve his fatigue ?f, but experiences 
-;; an increase in his hunger ?h.
-;; This is the `model' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq sleep 
-	(make-op :name 'sleep :pars '(?f ?h) ; level of fatigue ?f 
-                                         ; {0, 0.5, 1.0, 1.5, ...}
-                                         ; similarly for hunger ?h
-    :preconds '((is_at AG home)
-                (is_tired_to_degree AG ?f)
-                (>= ?f 2.5);(>= ?f 0.5)
-                (is_hungry_to_degree AG ?h)
-                (> ?f ?h) ; more tired than hungry
-                (not (there_is_a_fire))
-                (not (there_is_a_flood)) )
-    :effects '((is_tired_to_degree AG 0.0)
-               (not (is_tired_to_degree AG ?f))
-               (is_hungry_to_degree AG (+ ?h (* 0.5 ?f))) )
-    :time-required '(* 4 ?f)
-    :value '(* 1 ?f)
-    )
-)
-                  
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; With operator sleep.actual, AG sleeps to relieve his fatigue ?f, but 
-;; experiences an increase in his hunger ?h.
-;; This is the `actual' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq sleep.actual 
-	(make-op.actual :name 'sleep.actual :pars '(?f ?h) ; level of fatigue ?f 
-                                                	   ; level of hunger ?h
-    :startconds '((is_at AG home)
-                  (is_tired_to_degree AG ?f)
-                  (>= ?f 2.5)
-                  (is_hungry_to_degree AG ?h)
-                  (> ?f ?h) ); more tired than hungry
-    :stopconds '((there_is_a_fire)
-    						 (is_tired_to_degree AG 0.0))
-    :deletes '((is_tired_to_degree AG ?#1) 
-               (is_hungry_to_degree AG ?#2) )
-    :adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))))
-            (is_hungry_to_degree AG (+ ?h (* 0.25 (elapsed_time?)))) ) 
-    )
-)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; If hungry, at the same location ?y as is an is_edible food item ?x, and 
-;; aware of the item being is_edible, then AG can eat the item to assuage his 
-;; hunger ?h provided there is no fire or flood. Currently, food items are 
-;; inexhaustible.
-;; This is the `model' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq eat 
-	(make-op :name 'eat :pars '(?h ?x ?y) ; level of hunger ?h
-	:preconds '( (is_hungry_to_degree AG ?h) 
-				 (>= ?h 2.0)
-				 (is_at AG ?y) 
-				 (is_at ?x ?y) 
-				 (is_edible ?x) 
-				 (knows AG (whether (is_edible ?x)))
-				 (not (there_is_a_fire))
-                 (not (there_is_a_flood)) )
-	:effects '( (is_hungry_to_degree AG 0.0) 
-				(not (is_hungry_to_degree AG ?h)) )
-	:time-required 1
-	:value '(* 2 ?h)
-	)
-)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; If at the same location ?y as is an is_edible food item ?x and aware of 
-;; the item being is_edible, and as long as he is hungry, then AG can eat the 
-;; item to assuage his hunger ?h provided there is no fire or flood.
-;; Currently, food items are inexhaustible.
-;; This is the `actual' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq eat.actual 
-	(make-op.actual :name 'eat.actual :pars '(?h ?x ?y)
-	:startconds '( (is_hungry_to_degree AG ?h) 
-				   (>= ?h 2.0)
-				   (is_at AG ?y) 
-				   (is_at ?x ?y) 
-				   (is_edible ?x) 
-				   (knows AG (whether (is_edible ?x))) )
-	:stopconds '( (there_is_a_fire)
-				  (there_is_a_flood) 
-				  (is_hungry_to_degree AG 0.0) )
-	:deletes '( (is_hungry_to_degree AG ?#1) )
-	:adds '( (is_hungry_to_degree AG 0.0) )
-	)
-)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; If thirsty, at the same location ?y as is a is_potable drink item ?x, and 
-;; aware of it being is_potable, then AG can drink ?x to sate his thirst ?h.
-;; Currently, drink items are inexhaustible.
-;; This is the `model' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq drink 
-	(make-op :name 'drink :pars '(?h ?x ?y) ; level of thirst ?h
-	:preconds '( (is_thirsty_to_degree AG ?h) 
-				 (> ?h 0.0)
-				 (is_at AG ?y) 
-				 (is_at ?x ?y) 
-				 (is_potable ?x) 
-				 (knows AG (whether (is_potable ?x))) 
-				 (not (there_is_a_fire))
-                 (not (there_is_a_flood)) )
-	:effects '( (is_thirsty_to_degree AG 0.0) 
-				(not (is_thirsty_to_degree AG ?h)) )
-	:time-required 1
-	:value '(* 2 ?h)
-	)
-)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; If at the same location ?y as is a is_potable drink item ?x and aware of 
-;; it being is_potable, and as long as he is thirsty, then AG can drink ?x to 
-;; sate his thirst ?h. Currently, drink items are inexhaustible.
-;; This is the `actual' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq drink.actual 
-	(make-op.actual :name 'drink.actual :pars '(?h ?x ?y)
-	:startconds '( (is_thirsty_to_degree AG ?h) 
-				   (> ?h 0.0)
-				   (is_at AG ?y) 
-				   (is_at ?x ?y) 
-				   (is_potable ?x) 
-				   (knows AG (whether (is_potable ?x))) )
-	:stopconds '( (there_is_a_fire)
-				  		(there_is_a_flood) 
-				  		(is_thirsty_to_degree AG 0.0) )
-	:deletes '( (is_thirsty_to_degree AG ?#1) )
-	:adds '( (is_thirsty_to_degree AG 0.0) )
-	)
-)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; If at the same location ?z as is an agent ?x who knows whether ?y holds 
-;; which AG does not know, then AG can ask ?x and know whether ?y holds.
-;; This is the `model' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq ask+whether 
-	(make-op :name 'ask+whether :pars '(?x ?y ?z)
-	:preconds '( (is_at AG ?z) 
-				 (is_at ?x ?z) 
-				 (can_talk ?x) 
-				 (knows ?x (whether ?y))
-				 (not (knows AG (whether ?y))) )
-	:effects '( (knows AG (whether ?y)) )
-	:time-required 1
-	:value 5 
-	)
-)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; If at the same location ?z as is an agent ?x who knows whether ?y holds 
-;; which AG does not know, then AG can ask ?x and know whether ?y holds.
-;; This is the `actual' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq ask+whether.actual 
-	(make-op.actual :name 'ask+whether.actual :pars '(?x ?y ?z)
-	:startconds '( (is_at AG ?z) 
-				   (is_at ?x ?z) 
-				   (can_talk ?x) 
-				   (knows ?x (whether ?y))
-				   (not (knows AG (whether ?y))) )
-	:stopconds '( (knows AG (whether ?y)) )
-	:deletes '( )
-	:adds '( (knows AG (whether ?y)) )
-	)
-)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; If bored, at the same location ?y as is a is_playable item ?x, and 
-;; aware of it being is_playable, then AG can play ?x to relieve his boredom
-;; but also experience an increase in both his hunger ?h and fatigue ?f.
-;; This is the `model' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq play 
-	(make-op :name 'play :pars '(?h ?f ?x ?y) ; level of hunger ?h
-	:preconds '( (is_bored AG) 				  ; level of fatigue ?f
-				 (is_at AG ?y) 
-				 (is_at ?x ?y) 
-				 (is_playable ?x) 
-				 (is_thirsty_to_degree AG ?h)
-                 (is_tired_to_degree AG ?f)
-				 (knows AG (whether (is_playable ?x))) )
-	:effects '( (not (is_bored AG)) 
-				(not (is_thirsty_to_degree AG ?h))
-                (not (is_tired_to_degree AG ?f))
-				(is_thirsty_to_degree AG (+ ?h 0.5))
-                (is_tired_to_degree AG (+ ?f 0.5)) )
-	:time-required 1
-	:value 3
-	)
-)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; If at the same location ?y as is a is_playable item ?x and aware of it 
-;; being is_playable, and as long as AG is bored, then AG can play ?x to 
-;; relieve his boredom but also experience an increase in both his hunger 
-;; ?h and fatigue ?f.
-;; This is the `actual' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq play.actual 
-	(make-op.actual :name 'play.actual :pars '(?h ?f ?x ?y)
-	:startconds '( (is_bored AG)
-				   (is_at AG ?y) 
-				   (is_at ?x ?y) 
-				   (is_playable ?x) 
-				   (is_thirsty_to_degree AG ?h)
-                   (is_tired_to_degree AG ?f)
-				   (knows AG (whether (is_playable ?x))) )
-	:stopconds '( (not (is_bored AG)) )
-	:deletes '( (is_tired_to_degree AG ?#2) 
-                (is_thirsty_to_degree AG ?#1) 
-                (is_bored AG) )
-    :adds '( (is_tired_to_degree AG (+ ?f (* 0.5 (elapsed_time?))))
-             (is_thirsty_to_degree AG (+ ?h (* 0.5 (elapsed_time?)))) ) 
-	)
 )
