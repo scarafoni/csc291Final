@@ -21,10 +21,10 @@
 (defun lose-nth (n list)
   (append (subseq list 0 (1- n)) (nthcdr n list)))
 
-(defun flatten (a) (cond
-	((null a) nil)
-	((atom (car a)) (cons (car a) (flatten (cdr a))))
-	(t (append (flatten (car a)) (flatten (cdr a))))))
+;;(defun flatten (a) (cond
+;;	((null a) nil)
+;;	((atom (car a)) (cons (car a) (flatten (cdr a))))
+;;	(t (append (flatten (car a)) (flatten (cdr a))))))
 
 (defun make-block (l)
   (flatten (set-blocked l)))

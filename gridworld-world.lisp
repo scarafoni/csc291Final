@@ -79,6 +79,7 @@
   nil ; no associated-things
   ; current facts
   '((is_scared_to_degree AG 4.0)
+    (is_tired_to_degree AG 0.0)
      ;Note that right after the call to function initialize-state-node, 
      ;AG knows (is_edible pizza3) and (is_playable piano2). The reason is
      ;AG knows the types of pizza3 and piano2 colocated with AG at home,
@@ -126,7 +127,7 @@
 ; We omit this, as *occluded-preds* is currently already set in 
 ; "gridworld-definitions.lisp".
 
-(setq *operators* '(walk)) ;;grab)) ;;walk eat answer_user_ynq answer_user_whq sleep drink ask+whether play))
+(setq *operators* '(walk ));;grab)) ;;walk eat answer_user_ynq answer_user_whq sleep drink ask+whether play))
 (setq *search-beam*
 ;(list (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) ))
 	(list (cons 5 *operators*) (cons 4 *operators*) (cons 3 *operators*) ))
