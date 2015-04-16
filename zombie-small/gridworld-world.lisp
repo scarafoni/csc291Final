@@ -13,7 +13,7 @@
 (def-roadmap '(home grove plaza) '((path1 home 3 grove) (path2 home 2 plaza)))
 (def-object 'survivor '(is_animate can_think))
 (def-object 'crowbar '(can_open_door))
-(def-object 'door '(is_inanimate))
+(def-object 'door '(is_inanimate is_door))
 ;(def-object 'expert '(is_animate can_talk))
 ;(def-object 'instrument '(is_inanimate is_playable))
 ; (def-object 'juice '(is_inanimate is_potable (has_cost 2.0)))
@@ -28,7 +28,6 @@
   nil ; no associated-things
   ; current facts
   '((is_scared_to_degree AG 4.0)
-    (can_open_door crowbar1)
     ;;(is_hungry_to_degree AG 4.0)
 	;(is_thirsty_to_degree AG 2.0)
     ;;(is_tired_to_degree AG 0.0)
@@ -51,7 +50,7 @@
      ;simulated world and used by AG.
   ) 
   ; propositional attitudes
-  '(;(knows AG (whether (can_open_door crowbar1))) 
+  '((knows AG (whether (can_open_door crowbar1))) 
     ;;(knows AG (whether (is_playable piano2)))
     ;(knows AG (whether (is_edible pizza3)))
     ;(knows AG (that (knows guru (whether (is_potable juice3))))) 
@@ -67,7 +66,7 @@
 (place-object 'crowbar1 'crowbar 'plaza 0
               nil
               ; current facts
-              ((can_open_door crowbar1)
+              '((can_open_door crowbar1)
                )
               nil
 )
@@ -75,7 +74,7 @@
 (place-object 'door1 'door 'grove 0
     nil
     ; current facts
-    ((is_inanimate door1)
+    '((is_inanimate door1)
      )
     nil
 )
@@ -117,7 +116,7 @@
 ; "gridworld-definitions.lisp".
 
 ;; (setq *operators* '(walk eat answer_user_ynq answer_user_whq sleep drink ask+whether play))
-(setq *operators* '(walk grab answer-user_ynq answer_user_whq))
+(setq *operators* '(walk grab_crowbar answer_user_ynq answer_user_whq))
 (setq *search-beam*
 ;(list (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) ))
 	(list (cons 5 *operators*) (cons 4 *operators*) (cons 3 *operators*) ))
@@ -416,10 +415,24 @@
 ;;     )
 ;; )
 
+;; opens a door
+(setq open_door
+    (make-op :name 'open_door :pars '(?x ?y ?c) ;door x is at y and ag has crowbar c
+	:preconds '( (has AG ?x) 
+                 (can_open_door ?c)
+				 (is_at AG ?y) 
+				 (is_at ?x ?y) 
+				 (is_door ?x) 
+				 (knows AG (whether (can_open_door ?x))))
+	:effects '( (is_scared_to_degree AG 2.0))
+	:time-required 1
+	:value '1000
+	)
+)
 ;; pick up an object
-(setq grab-crowbar
-	(make-op :name 'grab-crowbar :pars '(?x ?y) ; level of hunger ?h
-	:preconds '( (not (has-crowbar AG)) 
+(setq grab_crowbar
+	(make-op :name 'grab_crowbar :pars '(?x ?y) ; level of hunger ?h
+	:preconds '( (not (has AG ?x)) 
 				 (is_at AG ?y) 
 				 (is_at ?x ?y) 
 				 (can_open_door ?x) 
@@ -455,6 +468,18 @@
 ;; 	)
 ;; )
 
+(setq grab_crowbar.actual
+	(make-op.actual :name 'grab_crowbar.actual :pars '(?x ?y) ; level of hunger ?h
+	:startconds '((not (has ?x AG)) 
+				 (is_at AG ?y) 
+				 (is_at ?x ?y) 
+				 (can_open_door ?x) 
+				 (knows AG (whether (can_open_door ?x))))
+    :stopconds '((has AG ?x))
+	:deletes '()
+    :adds '((has AG ?x))
+	)
+)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; If at the same location ?y as is an is_edible food item ?x and aware of 
 ;; the item being is_edible, and as long as he is hungry, then AG can eat the 
@@ -462,21 +487,21 @@
 ;; Currently, food items are inexhaustible.
 ;; This is the `actual' version.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq eat.actual 
-	(make-op.actual :name 'eat.actual :pars '(?h ?x ?y)
-	:startconds '( (is_hungry_to_degree AG ?h) 
-				   (>= ?h 2.0)
-				   (is_at AG ?y) 
-				   (is_at ?x ?y) 
-				   (is_edible ?x) 
-				   (knows AG (whether (is_edible ?x))) )
-	:stopconds '( (there_is_a_fire)
-				  (there_is_a_flood) 
-				  (is_hungry_to_degree AG 0.0) )
-	:deletes '( (is_hungry_to_degree AG ?#1) )
-	:adds '( (is_hungry_to_degree AG 0.0) )
-	)
-)
+;; (setq eat.actual 
+;; 	(make-op.actual :name 'eat.actual :pars '(?h ?x ?y)
+;; 	:startconds '( (is_hungry_to_degree AG ?h) 
+;; 				   (>= ?h 2.0)
+;; 				   (is_at AG ?y) 
+;; 				   (is_at ?x ?y) 
+;; 				   (is_edible ?x) 
+;; 				   (knows AG (whether (is_edible ?x))) )
+;; 	:stopconds '( (there_is_a_fire)
+;; 				  (there_is_a_flood) 
+;; 				  (is_hungry_to_degree AG 0.0) )
+;; 	:deletes '( (is_hungry_to_degree AG ?#1) )
+;; 	:adds '( (is_hungry_to_degree AG 0.0) )
+;; 	)
+;; )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; If thirsty, at the same location ?y as is a is_potable drink item ?x, and 
