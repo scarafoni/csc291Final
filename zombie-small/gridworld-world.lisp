@@ -10,6 +10,12 @@
 ;; Date: Jan. 2010 by Daphne Liu
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
+(defun getZMoves (s) 
+  (let ((l  (gethash '(nil s nil nil) *roadmap-knowledge*)))
+    (print (car l))
+    (cadddr (nth (random (length l)) l))))
+
 (def-roadmap '(SAA SAB SAC 
 		SBA SBB SBC 
 		SCA SCB SCC) 
@@ -42,6 +48,8 @@
     (is_at door1 SCC)
     (is_at crowbar1 SAC)
     (can_open_door crowbar1)
+    (can_open_door crowbar2)
+    (is_at crowbar2 SCA)
     (is_at zombie1 SAC)
     (is_closed door1)
     (is_door door1)
@@ -86,6 +94,14 @@
               nil
               ; current facts
               '((can_open_door crowbar1)
+               )
+              nil
+)
+
+(place-object 'crowbar2 'crowbar 'SCA 0
+              nil
+              ; current facts
+              '((can_open_door crowbar2)
                )
               nil
 )
@@ -264,27 +280,7 @@
 	)	
 )
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; With operator walk, AG walks from point ?x to point ?y on road ?z, with 
-;; initial fatigue level ?f, assuming speed of one unit per time step.
-;; This is the `model' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq walk 
-	(make-op :name 'walk :pars '(?x ?y ?z); ?f)
-	:preconds '((is_at AG ?x)        
-				(is_on ?x ?z)        
-				(is_on ?y ?z) (point ?y)
-				(navigable ?z))
-                ;;(is_tired_to_degree AG ?f) )
-    :effects '((is_at AG ?y) 
-    		   (not (is_at AG ?x)))
-               ;(is_tired_to_degree AG (+ ?f 0.5))
-               ;(is_tired_to_degree AG (+ ?f (* 0.5 (distance_from+to+on? ?x ?y ?z))))  
-               ;(not (is_tired_to_degree AG ?f)) )
-    :time-required '(distance_from+to+on? ?x ?y ?z)
-    :value '1;(- 3 ?f)
-    )
-)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; This evaluation function returns the numeric distance from location arg
@@ -327,29 +323,6 @@
 	)
 )
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; With operator walk.actual, AG walks from point ?x to point ?y on road ?z,  
-;; with initial fatigue level ?f, assuming speed of one unit per time step.
-;; This is the `actual' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq walk.actual 
-	(make-op.actual :name 'walk.actual :pars '(?x ?y ?z); ?f)
-	:startconds '((is_at AG ?x)        
-				  (is_on ?x ?z)        
-				  (is_on ?y ?z) (point y)
-				  (navigable ?z))
-                  ; (is_tired_to_degree AG ?f) )
-    :stopconds '((not (navigable ?z)) 
-    			 (is_at AG ?y) )
-    :deletes '((is_at AG ?#1))
-    		   ;(is_tired_to_degree AG ?#2))
-    :adds '((is_at AG (the_pt+units_from+towards+on_road? (* 1 (elapsed_time?)) ?x ?y ?z))
-    		(is_at AG (the_pt+units_from+towards+on_road? (- (distance_from+to+on? ?x ?y ?z) (* 1 (elapsed_time?))) ?y ?x ?z))
-    	    (is_on (the_pt+units_from+towards+on_road? (* 1 (elapsed_time?)) ?x ?y ?z) ?z)
-    	    (is_on (the_pt+units_from+towards+on_road? (- (distance_from+to+on? ?x ?y ?z) (* 1 (elapsed_time?))) ?y ?x ?z) ?z))
-    		;;(is_tired_to_degree AG (+ ?f (* 0.5 (elapsed_time?)))) )
-    )
-)
 
 
 
@@ -383,14 +356,15 @@
 (setq open_door
     (make-op :name 'open_door :pars '(?x ?y ?c) ;door x is at y and ag has crowbar c
 	:preconds '( (has AG ?c) 
-                (is_closed ?x)
+                ;(is_closed ?x)
+		(not (is_open ?x))
                 (can_open_door ?c)
                 (is_at AG ?y) 
                 (is_at ?x ?y) 
                 (is_door ?x))
-	:effects '( (is_scared_to_degree AG 0.0) (is_safe AG) (not (is_closed ?x)) (is_open ?x))
+	:effects '( (is_scared_to_degree AG 0.0) (is_safe AG) );(is_open ?x))
 	:time-required 1
-	:value '100
+	:value '50
 	)
 )
 
@@ -402,7 +376,7 @@
                   (is_at ?x ?y) 
                   (can_open_door ?c))
     :stopconds '((is_open ?x))
-	:deletes '((is_closed ?x))
+	:deletes '()
     :adds '((is_safe AG) (is_open ?x))
 	)
 )
@@ -431,3 +405,55 @@
 		:adds '((is_dead AG))
 	)
 )
+
+
+      
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; With operator walk, AG walks from point ?x to point ?y on road ?z, with 
+;; initial fatigue level ?f, assuming speed of one unit per time step.
+;; This is the `model' version.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(setq walk 
+	(make-op :name 'walk :pars '(?x ?y ?z); ?f)
+	:preconds '((is_at AG ?x)        
+				(is_on ?x ?z)        
+				(is_on ?y ?z) (point ?y)
+				(navigable ?z))
+                ;;(is_tired_to_degree AG ?f) )
+    :effects '((is_at AG ?y) 
+    		   (not (is_at AG ?x)))
+               ;(is_tired_to_degree AG (+ ?f 0.5))
+               ;(is_tired_to_degree AG (+ ?f (* 0.5 (distance_from+to+on? ?x ?y ?z))))  
+               ;(not (is_tired_to_degree AG ?f)) )
+    :time-required '(distance_from+to+on? ?x ?y ?z)
+    :value (if '(is_at zombie1 ?y) -10 -1);(- 3 ?f)
+    )
+)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; With operator walk.actual, AG walks from point ?x to point ?y on road ?z,  
+;; with initial fatigue level ?f, assuming speed of one unit per time step.
+;; This is the `actual' version.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(setq walk.actual 
+	(make-op.actual :name 'walk.actual :pars '(?x ?y ?z); ?f)
+	:startconds '((is_at AG ?x)        
+				  (is_on ?x ?z)        
+				  (is_on ?y ?z) (point y)
+				  (navigable ?z))
+                  ; (is_tired_to_degree AG ?f) )
+    :stopconds '((not (navigable ?z)) 
+    			 (is_at AG ?y) )
+    :deletes '((is_at AG ?#1))
+    		   ;(is_tired_to_degree AG ?#2))
+    :adds '((is_at AG (the_pt+units_from+towards+on_road? (* 1 (elapsed_time?)) ?x ?y ?z))
+    		(is_at AG (the_pt+units_from+towards+on_road? (- (distance_from+to+on? ?x ?y ?z) (* 1 (elapsed_time?))) ?y ?x ?z))
+    	    (is_on (the_pt+units_from+towards+on_road? (* 1 (elapsed_time?)) ?x ?y ?z) ?z)
+    	    (is_on (the_pt+units_from+towards+on_road? (- (distance_from+to+on? ?x ?y ?z) (* 1 (elapsed_time?))) ?y ?x ?z) ?z))
+    		;;(is_tired_to_degree AG (+ ?f (* 0.5 (elapsed_time?)))) )
+    )
+)
+
+;;(getZMoves 'SAA)

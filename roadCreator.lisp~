@@ -1,0 +1,46 @@
+(defparameter counter 0)
+(defun giveNext () (progn
+	(setq counter (+ counter 1))
+	counter))
+(defparameter rawList '((Saa Sab Sac Sad Sae Saf Sag Sah Sai Saj Sak Sal)
+               (Sba Sbb Sbc Sbd Sbe Sbf Sbg Sbh Sbi Sbj Sbk Sbl)
+               (Sca Scb Scc Scd Sce Scf Scg Sch Sci Scj Sck Scl)
+               (Sda Sdb Sdc Sdd Sde Sdf Sdg Sdh Sdi Sdj Sdk Sdl)
+               (Sea Seb Sec Sed See Sef Seg Seh Sei Sej Sek Sel)
+               (Sfa Sfb Sfc Sfd Sfe Sff Sfg Sfh Sfi Sfj Sfk Sfl)
+               (Sga Sgb Sgc Sgd Sge Sgf Sgg Sgh Sgi Sgj Sgk Sgl)
+               (Sha Shb Shc Shd She Shf Shg Shh Shi Shj Shk Shl)
+               (Sia Sib Sic Sid Sie Sif Sig Sih Sii Sij Sik Sil)
+		(Saa Sba Sca Sda Sea Sfa Sga Sha Sia)
+		(Sab Sbb Scb Sdb Seb Sfb Sgb Shb Sib)
+		(Sac Sbc Scc Sdc Sec Sfc Sgc Shc Sic)
+		(Sad Sbd Scd Sdd Sed Sfd Sgd Shd Sid)
+		(Sae Sbe Sce Sde See Sfe Sge She Sie)
+		(Saf Sbf Scf Sdf Sef Sff Sgf Shf Sif)
+		(Sag Sbg Scg Sdg Seg Sfg Sgg Shg Sig)
+		(Sah Sbh Sch Sdh Seh Sfh Sgh Shh Sih)
+		(Sai Sbi Sci Sdi Sei Sfi Sgi Shi Sii)
+		(Saj Sbj Scj Sdj Sej Sfj Sgj Shj Sij)
+		(Sak Sbk Sck Sdk Sek Sfk Sgk Shk Sik)
+		(Sal Sbl Scl Sdl Sel Sfl Sgl Shl Sil)     ))
+
+(defparameter miniList '(
+	(Saa Sab Sac)
+	(Sba Sbb Sbc)
+	(Sca Scb Scc)
+	(Saa Sba Sca)
+	(Sab Sbb Scb)
+	(Sac Sbc Scc)
+))
+
+
+(defun makeListHelper (l) (cond
+	((null (cdr l)) nil)
+	(t (append (list (list (concatenate 'string 'r (write-to-string (giveNext))) (car l) '1 (cadr l)) (list (concatenate 'string 'r (write-to-string (giveNext))) (cadr l) '1 (car l))) (makeListHelper (cdr l))))))
+
+(defun makeList (l) (cond
+	((null l) nil)
+	(t (append (makeListHelper (car l)) (makeList (cdr l))))))
+
+(print (makeList miniList))
+(print miniList)

@@ -24,6 +24,15 @@
 		(Sak Sbk Sck Sdk Sek Sfk Sgk Shk Sik)
 		(Sal Sbl Scl Sdl Sel Sfl Sgl Shl Sil)     ))
 
+(defparameter miniList '((
+	(Saa Sab Sac)
+	(Sba Sbb Sbc)
+	(Sca Scb Scc)
+	(Saa Sba Sca)
+	(Sab Sbb Scb)
+	(Sac Sbc Scc)
+))
+
 
 (defun makeListHelper (l) (cond
 	((null (cdr l)) nil)
@@ -32,3 +41,5 @@
 (defun makeList (l) (cond
 	((null l) nil)
 	(t (append (makeListHelper (car l)) (makeList (cdr l))))))
+
+(makeList miniList)
