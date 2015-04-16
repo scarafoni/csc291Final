@@ -10,10 +10,20 @@
 ;; Date: Jan. 2010 by Daphne Liu
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def-roadmap '(home grove plaza) '((path1 home 3 grove) (path2 home 2 plaza)))
+(def-roadmap '(SAA SAB SAC 
+		SBA SBB SBC 
+		SCA SCB SCC) 
+'(("r1" SAA 1 SAB) ("r2" SAB 1 SAA) ("r3" SAB 1 SAC) ("r4" SAC 1 SAB)
+ ("r5" SBA 1 SBB) ("r6" SBB 1 SBA) ("r7" SBB 1 SBC) ("r8" SBC 1 SBB)
+ ("r9" SCA 1 SCB) ("r10" SCB 1 SCA) ("r11" SCB 1 SCC) ("r12" SCC 1 SCB)
+ ("r13" SAA 1 SBA) ("r14" SBA 1 SAA) ("r15" SBA 1 SCA)
+ ("r16" SCA 1 SBA) ("r17" SAB 1 SBB) ("r18" SBB 1 SAB)
+ ("r19" SBB 1 SCB) ("r20" SCB 1 SBB) ("r21" SAC 1 SBC)
+ ("r22" SBC 1 SAC) ("r23" SBC 1 SCC) ("r24" SCC 1 SBC)) )
 (def-object 'survivor '(is_animate can_think))
 (def-object 'crowbar '(can_open_door))
 (def-object 'door '(is_inanimate is_door is_closed))
+(def-object 'zombie '(is_smelly is_zombie is_fat))
 
 ;(def-object 'expert '(is_animate can_talk))
 ;(def-object 'instrument '(is_inanimate is_playable))
@@ -25,12 +35,17 @@
 ;; AG that are really about the situation at plaza;
 ;; this is just a way of ensuring that AG knows these
 ;; facts right at the outset.
-(place-object 'AG 'surivor 'home 0  
+(place-object 'AG 'survivor 'SAA 0  
   nil ; no associated-things
   ; current facts
   '((is_scared_to_degree AG 4.0)
-    (is_at door1 grove)
-    (is_at crowbar1 plaza)
+    (is_at door1 SCC)
+    (is_at crowbar1 SAC)
+    (can_open_door crowbar1)
+    (is_at zombie1 SAC)
+    (is_closed door1)
+    (is_door door1)
+    (is_zombie zombie1)
     ;;(is_hungry_to_degree AG 4.0)
 	;(is_thirsty_to_degree AG 2.0)
     ;;(is_tired_to_degree AG 0.0)
@@ -67,7 +82,7 @@
    )
 )
 
-(place-object 'crowbar1 'crowbar 'plaza 0
+(place-object 'crowbar1 'crowbar 'SAC 0
               nil
               ; current facts
               '((can_open_door crowbar1)
@@ -75,7 +90,14 @@
               nil
 )
 
-(place-object 'door1 'door 'grove 0
+(place-object 'zombie1 'zombie 'SAC 0
+		nil
+		;current facts
+		'((is_zombie zombie1))
+		nil
+)
+
+(place-object 'door1 'door 'SCC 0
     nil
     ; current facts
     '((is_inanimate door1)
@@ -121,8 +143,8 @@
 ; We omit this, as *occluded-preds* is currently already set in 
 ; "gridworld-definitions.lisp".
 
-;; (setq *operators* '(walk eat answer_user_ynq answer_user_whq sleep drink ask+whether play))
-(setq *operators* '(walk grab_crowbar open_door answer_user_ynq answer_user_whq))
+;; (setq *operators* '(walk eat get_killed answer_user_ynq answer_user_whq sleep drink ask+whether play))
+(setq *operators* '(walk grab_crowbar get_killed open_door answer_user_ynq answer_user_whq))
 (setq *search-beam*
 ;(list (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) ))
 	(list (cons 5 *operators*) (cons 5 *operators*) (cons 5 *operators*) ))
@@ -260,7 +282,7 @@
                ;(is_tired_to_degree AG (+ ?f (* 0.5 (distance_from+to+on? ?x ?y ?z))))  
                ;(not (is_tired_to_degree AG ?f)) )
     :time-required '(distance_from+to+on? ?x ?y ?z)
-    :value '3;(- 3 ?f)
+    :value '1;(- 3 ?f)
     )
 )
 
@@ -341,7 +363,7 @@
 				 ;;(knows AG (whether (can_open_door ?x))))
 	:effects '( (is_scared_to_degree AG 2.0) (has AG ?x))
 	:time-required 1
-	:value '10
+	:value '30
 	)
 )
 
@@ -366,7 +388,7 @@
                 (is_at AG ?y) 
                 (is_at ?x ?y) 
                 (is_door ?x))
-	:effects '( (is_scared_to_degree AG 1.0) (is_safe AG) (not (is_closed ?x)) (is_open ?x))
+	:effects '( (is_scared_to_degree AG 0.0) (is_safe AG) (not (is_closed ?x)) (is_open ?x))
 	:time-required 1
 	:value '100
 	)
@@ -385,3 +407,27 @@
 	)
 )
 
+;;This kills the man
+(setq get_killed
+	(make-op :name 'get_killed :pars '(?x ?z)
+		:preconds '(
+			(is_zombie ?z)
+			(is_at AG ?x)
+			(is_at ?z ?x))
+		:effects '((is_dead AG))
+		:time-required 1
+		:value '-100
+	)
+)
+
+(setq get_killed.actual
+	(make-op.actual :name 'get_killed.actual :pars '(?x ?z) 
+		:startconds '(
+			(is_at AG ?x)
+			(is_at ?z ?x)
+			(is_zombie ?z))
+		:stopconds '((is_dead AG))
+		:deletes '()
+		:adds '((is_dead AG))
+	)
+)
