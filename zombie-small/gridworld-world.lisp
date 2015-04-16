@@ -13,7 +13,8 @@
 (def-roadmap '(home grove plaza) '((path1 home 3 grove) (path2 home 2 plaza)))
 (def-object 'survivor '(is_animate can_think))
 (def-object 'crowbar '(can_open_door))
-(def-object 'door '(is_inanimate is_door))
+(def-object 'door '(is_inanimate is_door is_closed))
+
 ;(def-object 'expert '(is_animate can_talk))
 ;(def-object 'instrument '(is_inanimate is_playable))
 ; (def-object 'juice '(is_inanimate is_potable (has_cost 2.0)))
@@ -28,6 +29,8 @@
   nil ; no associated-things
   ; current facts
   '((is_scared_to_degree AG 4.0)
+    (is_at door1 grove)
+    (is_at crowbar1 plaza)
     ;;(is_hungry_to_degree AG 4.0)
 	;(is_thirsty_to_degree AG 2.0)
     ;;(is_tired_to_degree AG 0.0)
@@ -51,6 +54,7 @@
   ) 
   ; propositional attitudes
   '((knows AG (whether (can_open_door crowbar1))) 
+    (knows AG (whether (is_door door1)))
     ;;(knows AG (whether (is_playable piano2)))
     ;(knows AG (whether (is_edible pizza3)))
     ;(knows AG (that (knows guru (whether (is_potable juice3))))) 
@@ -75,6 +79,8 @@
     nil
     ; current facts
     '((is_inanimate door1)
+      (is_door door1)
+      (is_closed door1)
      )
     nil
 )
@@ -116,57 +122,11 @@
 ; "gridworld-definitions.lisp".
 
 ;; (setq *operators* '(walk eat answer_user_ynq answer_user_whq sleep drink ask+whether play))
-(setq *operators* '(walk grab_crowbar answer_user_ynq answer_user_whq))
+(setq *operators* '(walk grab_crowbar open_door answer_user_ynq answer_user_whq))
 (setq *search-beam*
 ;(list (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) ))
-	(list (cons 5 *operators*) (cons 4 *operators*) (cons 3 *operators*) ))
+	(list (cons 5 *operators*) (cons 5 *operators*) (cons 5 *operators*) ))
 
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ;; Operator fire.actual is the exogenous fire operator.  As long as there 
-;; ;; is no rain, a spontaneous fire has a 5% chance of starting; once 
-;; ;; it has started, it has a 50% chance of stopping, and it also goes out 
-;; ;; as soon as there is rain.
-;; ;; This is the `actual' version.
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; (setq fire.actual 
-;; 	(make-op.actual :name 'fire.actual :pars '()
-;;     :startconds '((not (there_is_rain))
-;; 				  (= 3 (random 20))) ; 5% chance of fire starting
-;;     :starredStopConds '((= 1 (random 2)) ; 50% chance of stopping after starting
-;; 						(there_is_rain))
-;;     :starredDeletes '((there_is_a_fire))
-;;     :starredAdds '((navigable PATH1) (navigable PATH2) (navigable PATH3) (navigable PATH4))
-;;     :deletes '((navigable PATH1) (navigable PATH2) (navigable PATH3) (navigable PATH4))
-;;     :adds '((there_is_a_fire)) 
-;;     )
-;; )
-
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ;; Operator rain.actual is the exogenous rain operator.  Spontaneous rain 
-;; ;; has a 33% chance of starting; once it has started, it has a 25% chance 
-;; ;; of stopping.
-;; ;; This is the `actual' version.
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; (setq rain.actual 
-;; 	(make-op.actual :name 'rain.actual :pars '()
-;;     :startconds '((= 1 (random 3))) ; 33% chance of rain starting
-;;     :starredStopConds '((= 2 (random 4))) ; 25% chance of stopping after starting
-;;     :starredDeletes '((there_is_rain))
-;;     :adds '((there_is_rain)) 
-;;     )
-;; )
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Function answer_to_ynq? returns a well-formed formula indicating whether 
-;; or not the arg wff is currently in AG's KB, under the closed world 
-;; assumption. For example, if AG is currently hungry according to AG's KB,
-;; then (is_hungry AG) is returned as the response to 
-;; (answer_to_ynq? '(is_hungry AG)); else, (not (is_hungry AG)) is returned.
-;; This is the `model' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun answer_to_ynq? (wff)
-	(check-yn-fact-in-kb 'NIL wff (state-node-wff-htable *curr-state-node*))
-)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Function answer_to_ynq.actual? returns a well-formed formula indicating  
@@ -369,267 +329,59 @@
     )
 )
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; With operator sleep, AG sleeps to relieve his fatigue ?f, but experiences 
-;; an increase in his hunger ?h.
-;; This is the `model' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; (setq sleep 
-;; 	(make-op :name 'sleep :pars '(?f ?h) ; level of fatigue ?f 
-;;                                          ; {0, 0.5, 1.0, 1.5, ...}
-;;                                          ; similarly for hunger ?h
-;;     :preconds '((is_at AG home)
-;;                 (is_tired_to_degree AG ?f)
-;;                 (>= ?f 2.5);(>= ?f 0.5)
-;;                 (is_hungry_to_degree AG ?h)
-;;                 (> ?f ?h) ; more tired than hungry
-;;                 (not (there_is_a_fire))
-;;                 (not (there_is_a_flood)) )
-;;     :effects '((is_tired_to_degree AG 0.0)
-;;                (not (is_tired_to_degree AG ?f))
-;;                (is_hungry_to_degree AG (+ ?h (* 0.5 ?f))) )
-;;     :time-required '(* 4 ?f)
-;;     :value '(* 1 ?f)
-;;     )
-;; )
-                  
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; With operator sleep.actual, AG sleeps to relieve his fatigue ?f, but 
-;; experiences an increase in his hunger ?h.
-;; This is the `actual' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; (setq sleep.actual 
-;; 	(make-op.actual :name 'sleep.actual :pars '(?f ?h) ; level of fatigue ?f 
-;;                                                 	   ; level of hunger ?h
-;;     :startconds '((is_at AG home)
-;;                   (is_tired_to_degree AG ?f)
-;;                   (>= ?f 2.5)
-;;                   (is_hungry_to_degree AG ?h)
-;;                   (> ?f ?h) ); more tired than hungry
-;;     :stopconds '((there_is_a_fire)
-;;     						 (is_tired_to_degree AG 0.0))
-;;     :deletes '((is_tired_to_degree AG ?#1) 
-;;                (is_hungry_to_degree AG ?#2) )
-;;     :adds '((is_tired_to_degree AG (- ?f (* 0.5 (elapsed_time?))))
-;;             (is_hungry_to_degree AG (+ ?h (* 0.25 (elapsed_time?)))) ) 
-;;     )
-;; )
 
-;; opens a door
-(setq open_door
-    (make-op :name 'open_door :pars '(?x ?y ?c) ;door x is at y and ag has crowbar c
-	:preconds '( (has AG ?x) 
-                 (can_open_door ?c)
-				 (is_at AG ?y) 
-				 (is_at ?x ?y) 
-				 (is_door ?x) 
-				 (knows AG (whether (can_open_door ?x))))
-	:effects '( (is_scared_to_degree AG 2.0))
-	:time-required 1
-	:value '1000
-	)
-)
+
 ;; pick up an object
 (setq grab_crowbar
 	(make-op :name 'grab_crowbar :pars '(?x ?y) ; level of hunger ?h
 	:preconds '( (not (has AG ?x)) 
 				 (is_at AG ?y) 
 				 (is_at ?x ?y) 
-				 (can_open_door ?x) 
-				 (knows AG (whether (can_open_door ?x))))
-	:effects '( (is_scared_to_degree AG 2.0))
+				 (can_open_door ?x))
+				 ;;(knows AG (whether (can_open_door ?x))))
+	:effects '( (is_scared_to_degree AG 2.0) (has AG ?x))
 	:time-required 1
-	:value '1000
+	:value '10
 	)
 )
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; If hungry, at the same location ?y as is an is_edible food item ?x, and 
-;; aware of the item being is_edible, then AG can eat the item to assuage his 
-;; hunger ?h provided there is no fire or flood. Currently, food items are 
-;; inexhaustible.
-;; This is the `model' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; (setq eat 
-;; 	(make-op :name 'eat :pars '(?h ?x ?y) ; level of hunger ?h
-;; 	:preconds '( (is_hungry_to_degree AG ?h) 
-;; 				 (>= ?h 2.0)
-;; 				 (is_at AG ?y) 
-;; 				 (is_at ?x ?y) 
-;; 				 (is_edible ?x) 
-;; 				 (knows AG (whether (is_edible ?x)))
-;; 				 (not (there_is_a_fire))
-;;                  (not (there_is_a_flood)) )
-;; 	:effects '( (is_hungry_to_degree AG 0.0) 
-;; 				(not (is_hungry_to_degree AG ?h)) )
-;; 	:time-required 1
-;; 	:value '(* 2 ?h)
-;; 	)
-;; )
-
 (setq grab_crowbar.actual
 	(make-op.actual :name 'grab_crowbar.actual :pars '(?x ?y) ; level of hunger ?h
-	:startconds '((not (has ?x AG)) 
+	:startconds '((not (has AG ?x)) 
 				 (is_at AG ?y) 
 				 (is_at ?x ?y) 
-				 (can_open_door ?x) 
-				 (knows AG (whether (can_open_door ?x))))
+				 (can_open_door ?x))
     :stopconds '((has AG ?x))
 	:deletes '()
     :adds '((has AG ?x))
 	)
 )
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; If at the same location ?y as is an is_edible food item ?x and aware of 
-;; the item being is_edible, and as long as he is hungry, then AG can eat the 
-;; item to assuage his hunger ?h provided there is no fire or flood.
-;; Currently, food items are inexhaustible.
-;; This is the `actual' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; (setq eat.actual 
-;; 	(make-op.actual :name 'eat.actual :pars '(?h ?x ?y)
-;; 	:startconds '( (is_hungry_to_degree AG ?h) 
-;; 				   (>= ?h 2.0)
-;; 				   (is_at AG ?y) 
-;; 				   (is_at ?x ?y) 
-;; 				   (is_edible ?x) 
-;; 				   (knows AG (whether (is_edible ?x))) )
-;; 	:stopconds '( (there_is_a_fire)
-;; 				  (there_is_a_flood) 
-;; 				  (is_hungry_to_degree AG 0.0) )
-;; 	:deletes '( (is_hungry_to_degree AG ?#1) )
-;; 	:adds '( (is_hungry_to_degree AG 0.0) )
-;; 	)
-;; )
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; If thirsty, at the same location ?y as is a is_potable drink item ?x, and 
-;; aware of it being is_potable, then AG can drink ?x to sate his thirst ?h.
-;; Currently, drink items are inexhaustible.
-;; This is the `model' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; (setq drink 
-;; 	(make-op :name 'drink :pars '(?h ?x ?y) ; level of thirst ?h
-;; 	:preconds '( (is_thirsty_to_degree AG ?h) 
-;; 				 (> ?h 0.0)
-;; 				 (is_at AG ?y) 
-;; 				 (is_at ?x ?y) 
-;; 				 (is_potable ?x) 
-;; 				 (knows AG (whether (is_potable ?x))) 
-;; 				 (not (there_is_a_fire))
-;;                  (not (there_is_a_flood)) )
-;; 	:effects '( (is_thirsty_to_degree AG 0.0) 
-;; 				(not (is_thirsty_to_degree AG ?h)) )
-;; 	:time-required 1
-;; 	:value '(* 2 ?h)
-;; 	)
-;; )
+;; opens a door
+(setq open_door
+    (make-op :name 'open_door :pars '(?x ?y ?c) ;door x is at y and ag has crowbar c
+	:preconds '( (has AG ?c) 
+                (is_closed ?x)
+                (can_open_door ?c)
+                (is_at AG ?y) 
+                (is_at ?x ?y) 
+                (is_door ?x))
+	:effects '( (is_scared_to_degree AG 1.0) (is_safe AG) (not (is_closed ?x)) (is_open ?x))
+	:time-required 1
+	:value '100
+	)
+)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; If at the same location ?y as is a is_potable drink item ?x and aware of 
-;; it being is_potable, and as long as he is thirsty, then AG can drink ?x to 
-;; sate his thirst ?h. Currently, drink items are inexhaustible.
-;; This is the `actual' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; (setq drink.actual 
-;; 	(make-op.actual :name 'drink.actual :pars '(?h ?x ?y)
-;; 	:startconds '( (is_thirsty_to_degree AG ?h) 
-;; 				   (> ?h 0.0)
-;; 				   (is_at AG ?y) 
-;; 				   (is_at ?x ?y) 
-;; 				   (is_potable ?x) 
-;; 				   (knows AG (whether (is_potable ?x))) )
-;; 	:stopconds '( (there_is_a_fire)
-;; 				  		(there_is_a_flood) 
-;; 				  		(is_thirsty_to_degree AG 0.0) )
-;; 	:deletes '( (is_thirsty_to_degree AG ?#1) )
-;; 	:adds '( (is_thirsty_to_degree AG 0.0) )
-;; 	)
-;; )
+(setq open_door.actual
+	(make-op.actual :name 'open_door.actual :pars '(?x ?y ?c) ; level of hunger ?h
+	:startconds '((has AG ?c) 
+                  (is_closed ?x)
+                  (is_at AG ?y) 
+                  (is_at ?x ?y) 
+                  (can_open_door ?c))
+    :stopconds '((is_open ?x))
+	:deletes '((is_closed ?x))
+    :adds '((is_safe AG) (is_open ?x))
+	)
+)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; If at the same location ?z as is an agent ?x who knows whether ?y holds 
-;; which AG does not know, then AG can ask ?x and know whether ?y holds.
-;; This is the `model' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; (setq ask+whether 
-;; 	(make-op :name 'ask+whether :pars '(?x ?y ?z)
-;; 	:preconds '( (is_at AG ?z) 
-;; 				 (is_at ?x ?z) 
-;; 				 (can_talk ?x) 
-;; 				 (knows ?x (whether ?y))
-;; 				 (not (knows AG (whether ?y))) )
-;; 	:effects '( (knows AG (whether ?y)) )
-;; 	:time-required 1
-;; 	:value 5 
-;; 	)
-;; )
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; If at the same location ?z as is an agent ?x who knows whether ?y holds 
-;; which AG does not know, then AG can ask ?x and know whether ?y holds.
-;; This is the `actual' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; (setq ask+whether.actual 
-;; 	(make-op.actual :name 'ask+whether.actual :pars '(?x ?y ?z)
-;; 	:startconds '( (is_at AG ?z) 
-;; 				   (is_at ?x ?z) 
-;; 				   (can_talk ?x) 
-;; 				   (knows ?x (whether ?y))
-;; 				   (not (knows AG (whether ?y))) )
-;; 	:stopconds '( (knows AG (whether ?y)) )
-;; 	:deletes '( )
-;; 	:adds '( (knows AG (whether ?y)) )
-;; 	)
-;; )
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; If bored, at the same location ?y as is a is_playable item ?x, and 
-;; aware of it being is_playable, then AG can play ?x to relieve his boredom
-;; but also experience an increase in both his hunger ?h and fatigue ?f.
-;; This is the `model' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; (setq play 
-;; 	(make-op :name 'play :pars '(?h ?f ?x ?y) ; level of hunger ?h
-;; 	:preconds '( (is_bored AG) 				  ; level of fatigue ?f
-;; 				 (is_at AG ?y) 
-;; 				 (is_at ?x ?y) 
-;; 				 (is_playable ?x) 
-;; 				 (is_thirsty_to_degree AG ?h)
-;;                  (is_tired_to_degree AG ?f)
-;; 				 (knows AG (whether (is_playable ?x))) )
-;; 	:effects '( (not (is_bored AG)) 
-;; 				(not (is_thirsty_to_degree AG ?h))
-;;                 (not (is_tired_to_degree AG ?f))
-;; 				(is_thirsty_to_degree AG (+ ?h 0.5))
-;;                 (is_tired_to_degree AG (+ ?f 0.5)) )
-;; 	:time-required 1
-;; 	:value 3
-;; 	)
-;; )
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; If at the same location ?y as is a is_playable item ?x and aware of it 
-;; being is_playable, and as long as AG is bored, then AG can play ?x to 
-;; relieve his boredom but also experience an increase in both his hunger 
-;; ?h and fatigue ?f.
-;; This is the `actual' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; (setq play.actual 
-;; 	(make-op.actual :name 'play.actual :pars '(?h ?f ?x ?y)
-;; 	:startconds '( (is_bored AG)
-;; 				   (is_at AG ?y) 
-;; 				   (is_at ?x ?y) 
-;; 				   (is_playable ?x) 
-;; 				   (is_thirsty_to_degree AG ?h)
-;;                    (is_tired_to_degree AG ?f)
-;; 				   (knows AG (whether (is_playable ?x))) )
-;; 	:stopconds '( (not (is_bored AG)) )
-;; 	:deletes '( (is_tired_to_degree AG ?#2) 
-;;                 (is_thirsty_to_degree AG ?#1) 
-;;                 (is_bored AG) )
-;;     :adds '( (is_tired_to_degree AG (+ ?f (* 0.5 (elapsed_time?))))
-;;              (is_thirsty_to_degree AG (+ ?h (* 0.5 (elapsed_time?)))) ) 
-;; 	)
-;; )
