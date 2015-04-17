@@ -29,54 +29,102 @@
 
 
 
-(def-roadmap '(SAA SAB SAC SAD SAE SAF
-               SBA SBB SBC SBD SBE SBF
-               SCA SCB SCC SCD SCE SCF
-               SDA SDB SDC SDD SDE SDF
-               SEA SEB SEC SED SEE SEF
-               SFA SFB SFC SFD SFE SFF)
-    '(("r1" SAA 1 SAB) ("r2" SAB 1 SAA) ("r3" SAB 1 SAC) ("r4" SAC 1 SAB)
-      ("r5" SBA 1 SBB) ("r6" SBB 1 SBA) ("r7" SBB 1 SBC) ("r8" SBC 1 SBB)
-      ("r9" SCA 1 SCB) ("r10" SCB 1 SCA) ("r11" SCB 1 SCC) ("r12" SCC 1 SCB)
+;; (def-roadmap '(SAA SAB SAC SAD SAE SAF
+;;                SBA SBB SBC SBD SBE SBF
+;;                SCA SCB SCC SCD SCE SCF
+;;                SDA SDB SDC SDD SDE SDF
+;;                SEA SEB SEC SED SEE SEF
+;;                SFA SFB SFC SFD SFE SFF)
+;;     '(("r1" SAA 1 SAB) ("r2" SAB 1 SAA) ("r3" SAB 1 SAC) ("r4" SAC 1 SAB)
+;;       ("r5" SBA 1 SBB) ("r6" SBB 1 SBA) ("r7" SBB 1 SBC) ("r8" SBC 1 SBB)
+;;       ("r9" SCA 1 SCB) ("r10" SCB 1 SCA) ("r11" SCB 1 SCC) ("r12" SCC 1 SCB)
       
-      ("r13" SAA 1 SBA) ("r14" SBA 1 SAA) ("r15" SBA 1 SCA)
-      ("r16" SCA 1 SBA) ("r17" SAB 1 SBB) ("r18" SBB 1 SAB)
-      ("r19" SBB 1 SCB) ("r20" SCB 1 SBB) ("r21" SAC 1 SBC)
-      ("r22" SBC 1 SAC) ("r23" SBC 1 SCC) ("r24" SCC 1 SBC)
+;;       ("r13" SAA 1 SBA) ("r14" SBA 1 SAA) ("r15" SBA 1 SCA)
+;;       ("r16" SCA 1 SBA) ("r17" SAB 1 SBB) ("r18" SBB 1 SAB)
+;;       ("r19" SBB 1 SCB) ("r20" SCB 1 SBB) ("r21" SAC 1 SBC)
+;;       ("r22" SBC 1 SAC) ("r23" SBC 1 SCC) ("r24" SCC 1 SBC)
       
       
-      ("r25" SAD 1 SAE) ("r26" SAE 1 SAD) ("r27" SAE 1 SAF) ("r28" SAF 1 SAE)
+;;       ("r25" SAD 1 SAE) ("r26" SAE 1 SAD) ("r27" SAE 1 SAF) ("r28" SAF 1 SAE)
+;;       ("r29" SBD 1 SBE) ("r30" SBE 1 SBD) ("r31" SBE 1 SBF) ("r32" SBF 1 SBE)
+;;       ("r33" SCD 1 SCE) ("r34" SCE 1 SCD) ("r35" SCE 1 SCF) ("r36" SCF 1 SCE)
+      
+;;       ("r37" SAD 1 SBD) ("r38" SBD 1 SAD) ("r39" SBD 1 SCD)
+;;       ("r40" SCD 1 SBD) ("r41" SAE 1 SBE) ("r42" SBE 1 SAE)
+;;       ("r43" SBE 1 SCE) ("r44" SCE 1 SBE) ("r45" SAF 1 SBF)
+;;       ("r46" SBF 1 SAC) ("r47" SBF 1 SCF) ("r48" SCF 1 SBF)
+      
+      
+;;       ("r49" SDA 1 SDB) ("r50" SDB 1 SDA) ("r51" SDB 1 SDC) ("r52" SDC 1 SDB)
+;;       ("r53" SEA 1 SEB) ("r54" SEB 1 SEA) ("r55" SEB 1 SEC) ("r56" SEC 1 SEB)
+;;       ("r57" SFA 1 SFB) ("r58" SFB 1 SFA) ("r59" SFB 1 SFC) ("r60" SFC 1 SFB)
+      
+;;       ("r61" SDA 1 SEA) ("r62" SEA 1 SDA) ("r63" SEA 1 SFA)
+;;       ("r64" SFA 1 SEA) ("r65" SDB 1 SEB) ("r66" SEB 1 SDB)
+;;       ("r67" SEB 1 SFB) ("r68" SFB 1 SEB) ("r69" SDC 1 SEC)
+;;       ("r70" SEC 1 SDC) ("r71" SEC 1 SFC) ("r72" SFC 1 SEC)
+      
+      
+;;       ("r73" SDD 1 SDE) ("r74" SDE 1 SDD) ("r75" SDE 1 SDF) ("r76" SDF 1 SDE)
+;;       ("r77" SED 1 SEE) ("r78" SEE 1 SED) ("r79" SEE 1 SEF) ("r80" SEF 1 SEE)
+;;       ("r81" SFD 1 SFE) ("r82" SFE 1 SFD) ("r83" SFE 1 SFF) ("r84" SFF 1 SFE)
+      
+;;       ("r85" SDD 1 SED) ("r86" SED 1 SDD) ("r87" SED 1 SFD)
+;;       ("r88" SFD 1 SED) ("r89" SDE 1 SEE) ("r90" SEE 1 SDE)
+;;       ("r91" SEE 1 SFE) ("r92" SFE 1 SEE) ("r93" SDF 1 SEF)
+;;       ("r94" SEF 1 SDF) ("r95" SEF 1 SFF) ("r96" SFF 1 SEF)
+
+;;       ("r97" SBC 1 SBD) ("r98" SBD 1 SBC) ("r99" SCE 1 SDE) ("r100" SDE 1 SCE)
+;;       ("r101" SCB 1 SDB) ("r102" SDB 1 SCB) ("r103" SEC 1 SED) ("r104" SED 1 SEC)))
+
+
+(def-roadmap '(                SAE SAF
+                   SBB SBC SBD SBE SBF
+                   SCB SCC SCD SCE SCF
+                   SDB SDC     SDE    
+                   SEB SEC SED SEE    
+                   SFB         SFE    )
+    '(                                                                   
+                                        ("r7" SBB 1 SBC) ("r8" SBC 1 SBB)
+                                         ("r11" SCB 1 SCC) ("r12" SCC 1 SCB)
+      
+                                                           
+                                                           
+      ("r19" SBB 1 SCB) ("r20" SCB 1 SBB)                  
+                        ("r23" SBC 1 SCC) ("r24" SCC 1 SBC)
+      
+      
+                                          ("r27" SAE 1 SAF) ("r28" SAF 1 SAE)
       ("r29" SBD 1 SBE) ("r30" SBE 1 SBD) ("r31" SBE 1 SBF) ("r32" SBF 1 SBE)
       ("r33" SCD 1 SCE) ("r34" SCE 1 SCD) ("r35" SCE 1 SCF) ("r36" SCF 1 SCE)
       
-      ("r37" SAD 1 SBD) ("r38" SBD 1 SAD) ("r39" SBD 1 SCD)
+                                          ("r39" SBD 1 SCD)
       ("r40" SCD 1 SBD) ("r41" SAE 1 SBE) ("r42" SBE 1 SAE)
       ("r43" SBE 1 SCE) ("r44" SCE 1 SBE) ("r45" SAF 1 SBF)
-      ("r46" SBF 1 SAC) ("r47" SBF 1 SCF) ("r48" SCF 1 SBF)
+                        ("r47" SBF 1 SCF) ("r48" SCF 1 SBF)
       
       
-      ("r49" SDA 1 SDB) ("r50" SDB 1 SDA) ("r51" SDB 1 SDC) ("r52" SDC 1 SDB)
-      ("r53" SEA 1 SEB) ("r54" SEB 1 SEA) ("r55" SEB 1 SEC) ("r56" SEC 1 SEB)
-      ("r57" SFA 1 SFB) ("r58" SFB 1 SFA) ("r59" SFB 1 SFC) ("r60" SFC 1 SFB)
+                                          ("r51" SDB 1 SDC) ("r52" SDC 1 SDB)
+                                          ("r55" SEB 1 SEC) ("r56" SEC 1 SEB)
+                                                                             
       
-      ("r61" SDA 1 SEA) ("r62" SEA 1 SDA) ("r63" SEA 1 SFA)
-      ("r64" SFA 1 SEA) ("r65" SDB 1 SEB) ("r66" SEB 1 SDB)
+                                                           
+                        ("r65" SDB 1 SEB) ("r66" SEB 1 SDB)
       ("r67" SEB 1 SFB) ("r68" SFB 1 SEB) ("r69" SDC 1 SEC)
-      ("r70" SEC 1 SDC) ("r71" SEC 1 SFC) ("r72" SFC 1 SEC)
+      ("r70" SEC 1 SDC)                                    
       
       
-      ("r73" SDD 1 SDE) ("r74" SDE 1 SDD) ("r75" SDE 1 SDF) ("r76" SDF 1 SDE)
-      ("r77" SED 1 SEE) ("r78" SEE 1 SED) ("r79" SEE 1 SEF) ("r80" SEF 1 SEE)
-      ("r81" SFD 1 SFE) ("r82" SFE 1 SFD) ("r83" SFE 1 SFF) ("r84" SFF 1 SFE)
+                                                                             
+      ("r77" SED 1 SEE) ("r78" SEE 1 SED)                                    
+                                                                             
       
-      ("r85" SDD 1 SED) ("r86" SED 1 SDD) ("r87" SED 1 SFD)
-      ("r88" SFD 1 SED) ("r89" SDE 1 SEE) ("r90" SEE 1 SDE)
-      ("r91" SEE 1 SFE) ("r92" SFE 1 SEE) ("r93" SDF 1 SEF)
-      ("r94" SEF 1 SDF) ("r95" SEF 1 SFF) ("r96" SFF 1 SEF)
+                                                           
+                        ("r89" SDE 1 SEE) ("r90" SEE 1 SDE)
+      ("r91" SEE 1 SFE) ("r92" SFE 1 SEE)                  
+                                                           
 
       ("r97" SBC 1 SBD) ("r98" SBD 1 SBC) ("r99" SCE 1 SDE) ("r100" SDE 1 SCE)
       ("r101" SCB 1 SDB) ("r102" SDB 1 SCB) ("r103" SEC 1 SED) ("r104" SED 1 SEC)))
-
 
 (def-object 'survivor '(is_animate can_think))
 (def-object 'crowbar '(can_open_door))
@@ -97,11 +145,11 @@
   nil ; no associated-things
   ; current facts
   '((is_scared_to_degree AG 4.0)
-    (is_at door1 SFB)
-    (is_at crowbar1 c1-log)
+    (is_at door1 SFE)
+    (is_at crowbar1 SCD)
     (can_open_door crowbar1)
     (can_open_door crowbar2)
-    (is_at crowbar2 SCB)
+    (is_at crowbar2 SFB)
     (is_at zombie1 SBF)
     (is_closed door1)
     (is_door door1)
@@ -142,7 +190,7 @@
    )
 )
 
-(place-object 'crowbar1 'crowbar SCD 0
+(place-object 'crowbar1 'crowbar 'SCD 0
               nil
               ; current facts
               '((can_open_door crowbar1)
@@ -150,7 +198,7 @@
               nil
 )
 
-(place-object 'crowbar2 'crowbar SCB 0
+(place-object 'crowbar2 'crowbar 'SFB 0
               nil
               ; current facts
               '((can_open_door crowbar2)
@@ -165,7 +213,7 @@
 		nil
 )
 
-(place-object 'door1 'door 'SFB 0
+(place-object 'door1 'door 'SFE 0
     nil
     ; current facts
     '((is_inanimate door1)
@@ -215,7 +263,7 @@
 (setq *operators* '(walk grab_crowbar get_killed open_door answer_user_ynq answer_user_whq))
 (setq *search-beam*
 ;(list (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) ))
-	(list (cons 5 *operators*) (cons 5 *operators*) (cons 5 *operators*) ))
+	(list (cons 3 *operators*) (cons 2 *operators*) (cons 2 *operators*) (cons 2 *operators*) (cons 2 *operators*)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
