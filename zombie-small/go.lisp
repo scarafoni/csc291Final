@@ -12,7 +12,7 @@
 
 (format t "~% GO ~%")
                 ;Handle the spontaneous fire and flood.
-                ;(handleExtOps)
+                (handleExtOps)
                 ; Above line commented out only for opportunic runs
 
 

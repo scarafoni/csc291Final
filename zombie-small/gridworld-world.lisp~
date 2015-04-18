@@ -10,16 +10,122 @@
 ;; Date: Jan. 2010 by Daphne Liu
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def-roadmap '(SAA SAB SAC 
-		SBA SBB SBC 
-		SCA SCB SCC) 
-'(("r1" SAA 1 SAB) ("r2" SAB 1 SAA) ("r3" SAB 1 SAC) ("r4" SAC 1 SAB)
- ("r5" SBA 1 SBB) ("r6" SBB 1 SBA) ("r7" SBB 1 SBC) ("r8" SBC 1 SBB)
- ("r9" SCA 1 SCB) ("r10" SCB 1 SCA) ("r11" SCB 1 SCC) ("r12" SCC 1 SCB)
- ("r13" SAA 1 SBA) ("r14" SBA 1 SAA) ("r15" SBA 1 SCA)
- ("r16" SCA 1 SBA) ("r17" SAB 1 SBB) ("r18" SBB 1 SAB)
- ("r19" SBB 1 SCB) ("r20" SCB 1 SBB) ("r21" SAC 1 SBC)
- ("r22" SBC 1 SAC) ("r23" SBC 1 SCC) ("r24" SCC 1 SBC)) )
+
+(defun getZMoves (s) 
+  (let ((l  (gethash '(nil s nil nil) *roadmap-knowledge*)))
+    (print (car l))
+    (cadddr (nth (random (length l)) l))))
+
+;; (def-roadmap '(SAA SAB SAC 
+;; 		SBA SBB SBC 
+;; 		SCA SCB SCC) 
+;; '(("r1" SAA 1 SAB) ("r2" SAB 1 SAA) ("r3" SAB 1 SAC) ("r4" SAC 1 SAB)
+;;  ("r5" SBA 1 SBB) ("r6" SBB 1 SBA) ("r7" SBB 1 SBC) ("r8" SBC 1 SBB)
+;;  ("r9" SCA 1 SCB) ("r10" SCB 1 SCA) ("r11" SCB 1 SCC) ("r12" SCC 1 SCB)
+;;  ("r13" SAA 1 SBA) ("r14" SBA 1 SAA) ("r15" SBA 1 SCA)
+;;  ("r16" SCA 1 SBA) ("r17" SAB 1 SBB) ("r18" SBB 1 SAB)
+;;  ("r19" SBB 1 SCB) ("r20" SCB 1 SBB) ("r21" SAC 1 SBC)
+;;  ("r22" SBC 1 SAC) ("r23" SBC 1 SCC) ("r24" SCC 1 SBC)) )
+
+
+
+;; (def-roadmap '(SAA SAB SAC SAD SAE SAF
+;;                SBA SBB SBC SBD SBE SBF
+;;                SCA SCB SCC SCD SCE SCF
+;;                SDA SDB SDC SDD SDE SDF
+;;                SEA SEB SEC SED SEE SEF
+;;                SFA SFB SFC SFD SFE SFF)
+;;     '(("r1" SAA 1 SAB) ("r2" SAB 1 SAA) ("r3" SAB 1 SAC) ("r4" SAC 1 SAB)
+;;       ("r5" SBA 1 SBB) ("r6" SBB 1 SBA) ("r7" SBB 1 SBC) ("r8" SBC 1 SBB)
+;;       ("r9" SCA 1 SCB) ("r10" SCB 1 SCA) ("r11" SCB 1 SCC) ("r12" SCC 1 SCB)
+      
+;;       ("r13" SAA 1 SBA) ("r14" SBA 1 SAA) ("r15" SBA 1 SCA)
+;;       ("r16" SCA 1 SBA) ("r17" SAB 1 SBB) ("r18" SBB 1 SAB)
+;;       ("r19" SBB 1 SCB) ("r20" SCB 1 SBB) ("r21" SAC 1 SBC)
+;;       ("r22" SBC 1 SAC) ("r23" SBC 1 SCC) ("r24" SCC 1 SBC)
+      
+      
+;;       ("r25" SAD 1 SAE) ("r26" SAE 1 SAD) ("r27" SAE 1 SAF) ("r28" SAF 1 SAE)
+;;       ("r29" SBD 1 SBE) ("r30" SBE 1 SBD) ("r31" SBE 1 SBF) ("r32" SBF 1 SBE)
+;;       ("r33" SCD 1 SCE) ("r34" SCE 1 SCD) ("r35" SCE 1 SCF) ("r36" SCF 1 SCE)
+      
+;;       ("r37" SAD 1 SBD) ("r38" SBD 1 SAD) ("r39" SBD 1 SCD)
+;;       ("r40" SCD 1 SBD) ("r41" SAE 1 SBE) ("r42" SBE 1 SAE)
+;;       ("r43" SBE 1 SCE) ("r44" SCE 1 SBE) ("r45" SAF 1 SBF)
+;;       ("r46" SBF 1 SAC) ("r47" SBF 1 SCF) ("r48" SCF 1 SBF)
+      
+      
+;;       ("r49" SDA 1 SDB) ("r50" SDB 1 SDA) ("r51" SDB 1 SDC) ("r52" SDC 1 SDB)
+;;       ("r53" SEA 1 SEB) ("r54" SEB 1 SEA) ("r55" SEB 1 SEC) ("r56" SEC 1 SEB)
+;;       ("r57" SFA 1 SFB) ("r58" SFB 1 SFA) ("r59" SFB 1 SFC) ("r60" SFC 1 SFB)
+      
+;;       ("r61" SDA 1 SEA) ("r62" SEA 1 SDA) ("r63" SEA 1 SFA)
+;;       ("r64" SFA 1 SEA) ("r65" SDB 1 SEB) ("r66" SEB 1 SDB)
+;;       ("r67" SEB 1 SFB) ("r68" SFB 1 SEB) ("r69" SDC 1 SEC)
+;;       ("r70" SEC 1 SDC) ("r71" SEC 1 SFC) ("r72" SFC 1 SEC)
+      
+      
+;;       ("r73" SDD 1 SDE) ("r74" SDE 1 SDD) ("r75" SDE 1 SDF) ("r76" SDF 1 SDE)
+;;       ("r77" SED 1 SEE) ("r78" SEE 1 SED) ("r79" SEE 1 SEF) ("r80" SEF 1 SEE)
+;;       ("r81" SFD 1 SFE) ("r82" SFE 1 SFD) ("r83" SFE 1 SFF) ("r84" SFF 1 SFE)
+      
+;;       ("r85" SDD 1 SED) ("r86" SED 1 SDD) ("r87" SED 1 SFD)
+;;       ("r88" SFD 1 SED) ("r89" SDE 1 SEE) ("r90" SEE 1 SDE)
+;;       ("r91" SEE 1 SFE) ("r92" SFE 1 SEE) ("r93" SDF 1 SEF)
+;;       ("r94" SEF 1 SDF) ("r95" SEF 1 SFF) ("r96" SFF 1 SEF)
+
+;;       ("r97" SBC 1 SBD) ("r98" SBD 1 SBC) ("r99" SCE 1 SDE) ("r100" SDE 1 SCE)
+;;       ("r101" SCB 1 SDB) ("r102" SDB 1 SCB) ("r103" SEC 1 SED) ("r104" SED 1 SEC)))
+
+
+(def-roadmap '(                SAE SAF
+                   SBB SBC SBD SBE SBF
+                   SCB SCC SCD SCE SCF
+                   SDB SDC     SDE    
+                   SEB SEC SED SEE    
+                   SFB         SFE    )
+    '(                                                                   
+                                        ("r7" SBB 1 SBC) ("r8" SBC 1 SBB)
+                                         ("r11" SCB 1 SCC) ("r12" SCC 1 SCB)
+      
+                                                           
+                                                           
+      ("r19" SBB 1 SCB) ("r20" SCB 1 SBB)                  
+                        ("r23" SBC 1 SCC) ("r24" SCC 1 SBC)
+      
+      
+                                          ("r27" SAE 1 SAF) ("r28" SAF 1 SAE)
+      ("r29" SBD 1 SBE) ("r30" SBE 1 SBD) ("r31" SBE 1 SBF) ("r32" SBF 1 SBE)
+      ("r33" SCD 1 SCE) ("r34" SCE 1 SCD) ("r35" SCE 1 SCF) ("r36" SCF 1 SCE)
+      
+                                          ("r39" SBD 1 SCD)
+      ("r40" SCD 1 SBD) ("r41" SAE 1 SBE) ("r42" SBE 1 SAE)
+      ("r43" SBE 1 SCE) ("r44" SCE 1 SBE) ("r45" SAF 1 SBF)
+                        ("r47" SBF 1 SCF) ("r48" SCF 1 SBF)
+      
+      
+                                          ("r51" SDB 1 SDC) ("r52" SDC 1 SDB)
+                                          ("r55" SEB 1 SEC) ("r56" SEC 1 SEB)
+                                                                             
+      
+                                                           
+                        ("r65" SDB 1 SEB) ("r66" SEB 1 SDB)
+      ("r67" SEB 1 SFB) ("r68" SFB 1 SEB) ("r69" SDC 1 SEC)
+      ("r70" SEC 1 SDC)                                    
+      
+      
+                                                                             
+      ("r77" SED 1 SEE) ("r78" SEE 1 SED)                                    
+                                                                             
+      
+                                                           
+                        ("r89" SDE 1 SEE) ("r90" SEE 1 SDE)
+      ("r91" SEE 1 SFE) ("r92" SFE 1 SEE)                  
+                                                           
+
+      ("r97" SBC 1 SBD) ("r98" SBD 1 SBC) ("r99" SCE 1 SDE) ("r100" SDE 1 SCE)
+      ("r101" SCB 1 SDB) ("r102" SDB 1 SCB) ("r103" SEC 1 SED) ("r104" SED 1 SEC)))
+
 (def-object 'survivor '(is_animate can_think))
 (def-object 'crowbar '(can_open_door))
 (def-object 'door '(is_inanimate is_door is_closed))
@@ -35,14 +141,16 @@
 ;; AG that are really about the situation at plaza;
 ;; this is just a way of ensuring that AG knows these
 ;; facts right at the outset.
-(place-object 'AG 'survivor 'SAA 0  
+(place-object 'AG 'survivor 'SBB 0  
   nil ; no associated-things
   ; current facts
   '((is_scared_to_degree AG 4.0)
-    (is_at door1 SCC)
-    (is_at crowbar1 SAC)
+    (is_at door1 SFE)
+    (is_at crowbar1 SCD)
     (can_open_door crowbar1)
-    (is_at zombie1 SAC)
+    (can_open_door crowbar2)
+    (is_at crowbar2 SFB)
+    (is_at zombie1 SBF)
     (is_closed door1)
     (is_door door1)
     (is_zombie zombie1)
@@ -82,7 +190,7 @@
    )
 )
 
-(place-object 'crowbar1 'crowbar 'SAC 0
+(place-object 'crowbar1 'crowbar 'SCD 0
               nil
               ; current facts
               '((can_open_door crowbar1)
@@ -90,14 +198,22 @@
               nil
 )
 
-(place-object 'zombie1 'zombie 'SAC 0
+(place-object 'crowbar2 'crowbar 'SFB 0
+              nil
+              ; current facts
+              '((can_open_door crowbar2)
+               )
+              nil
+)
+
+(place-object 'zombie1 'zombie 'SBF 0
 		nil
 		;current facts
 		'((is_zombie zombie1))
 		nil
 )
 
-(place-object 'door1 'door 'SCC 0
+(place-object 'door1 'door 'SFE 0
     nil
     ; current facts
     '((is_inanimate door1)
@@ -147,7 +263,7 @@
 (setq *operators* '(walk grab_crowbar get_killed open_door answer_user_ynq answer_user_whq))
 (setq *search-beam*
 ;(list (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) ))
-	(list (cons 5 *operators*) (cons 5 *operators*) (cons 5 *operators*) ))
+	(list (cons 3 *operators*) (cons 2 *operators*) (cons 2 *operators*) (cons 2 *operators*) (cons 2 *operators*)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -264,27 +380,27 @@
 	)	
 )
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; With operator walk, AG walks from point ?x to point ?y on road ?z, with 
-;; initial fatigue level ?f, assuming speed of one unit per time step.
-;; This is the `model' version.
+;; Operator fire.actual is the exogenous fire operator.  As long as there 
+;; is no rain, a spontaneous fire has a 5% chance of starting; once 
+;; it has started, it has a 50% chance of stopping, and it also goes out 
+;; as soon as there is rain.
+;; This is the `actual' version.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq walk 
-	(make-op :name 'walk :pars '(?x ?y ?z); ?f)
-	:preconds '((is_at AG ?x)        
-				(is_on ?x ?z)        
-				(is_on ?y ?z) (point ?y)
-				(navigable ?z))
-                ;;(is_tired_to_degree AG ?f) )
-    :effects '((is_at AG ?y) 
-    		   (not (is_at AG ?x)))
-               ;(is_tired_to_degree AG (+ ?f 0.5))
-               ;(is_tired_to_degree AG (+ ?f (* 0.5 (distance_from+to+on? ?x ?y ?z))))  
-               ;(not (is_tired_to_degree AG ?f)) )
-    :time-required '(distance_from+to+on? ?x ?y ?z)
-    :value '1;(- 3 ?f)
+(setq fire.actual 
+	(make-op.actual :name 'fire.actual :pars '()
+    :startconds '((not (there_is_rain))
+				  (= 3 (random 20))) ; 5% chance of fire starting
+    :starredStopConds '((= 1 (random 2)) ; 50% chance of stopping after starting
+						(there_is_rain))
+    :starredDeletes '((there_is_a_fire))
+    :starredAdds '((navigable PATH1) (navigable PATH2) (navigable PATH3) (navigable PATH4))
+    :deletes '((navigable PATH1) (navigable PATH2) (navigable PATH3) (navigable PATH4))
+    :adds '((there_is_a_fire)) 
     )
 )
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; This evaluation function returns the numeric distance from location arg
@@ -327,29 +443,6 @@
 	)
 )
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; With operator walk.actual, AG walks from point ?x to point ?y on road ?z,  
-;; with initial fatigue level ?f, assuming speed of one unit per time step.
-;; This is the `actual' version.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(setq walk.actual 
-	(make-op.actual :name 'walk.actual :pars '(?x ?y ?z); ?f)
-	:startconds '((is_at AG ?x)        
-				  (is_on ?x ?z)        
-				  (is_on ?y ?z) (point y)
-				  (navigable ?z))
-                  ; (is_tired_to_degree AG ?f) )
-    :stopconds '((not (navigable ?z)) 
-    			 (is_at AG ?y) )
-    :deletes '((is_at AG ?#1))
-    		   ;(is_tired_to_degree AG ?#2))
-    :adds '((is_at AG (the_pt+units_from+towards+on_road? (* 1 (elapsed_time?)) ?x ?y ?z))
-    		(is_at AG (the_pt+units_from+towards+on_road? (- (distance_from+to+on? ?x ?y ?z) (* 1 (elapsed_time?))) ?y ?x ?z))
-    	    (is_on (the_pt+units_from+towards+on_road? (* 1 (elapsed_time?)) ?x ?y ?z) ?z)
-    	    (is_on (the_pt+units_from+towards+on_road? (- (distance_from+to+on? ?x ?y ?z) (* 1 (elapsed_time?))) ?y ?x ?z) ?z))
-    		;;(is_tired_to_degree AG (+ ?f (* 0.5 (elapsed_time?)))) )
-    )
-)
 
 
 
@@ -383,14 +476,15 @@
 (setq open_door
     (make-op :name 'open_door :pars '(?x ?y ?c) ;door x is at y and ag has crowbar c
 	:preconds '( (has AG ?c) 
-                (is_closed ?x)
+                ;(is_closed ?x)
+		(not (is_open ?x))
                 (can_open_door ?c)
                 (is_at AG ?y) 
                 (is_at ?x ?y) 
                 (is_door ?x))
-	:effects '( (is_scared_to_degree AG 0.0) (is_safe AG) (not (is_closed ?x)) (is_open ?x))
+	:effects '( (is_scared_to_degree AG 0.0) (is_safe AG) );(is_open ?x))
 	:time-required 1
-	:value '100
+	:value '50
 	)
 )
 
@@ -402,7 +496,7 @@
                   (is_at ?x ?y) 
                   (can_open_door ?c))
     :stopconds '((is_open ?x))
-	:deletes '((is_closed ?x))
+	:deletes '()
     :adds '((is_safe AG) (is_open ?x))
 	)
 )
@@ -416,7 +510,7 @@
 			(is_at ?z ?x))
 		:effects '((is_dead AG))
 		:time-required 1
-		:value '100
+		:value '-100
 	)
 )
 
@@ -431,3 +525,55 @@
 		:adds '((is_dead AG))
 	)
 )
+
+
+      
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; With operator walk, AG walks from point ?x to point ?y on road ?z, with 
+;; initial fatigue level ?f, assuming speed of one unit per time step.
+;; This is the `model' version.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(setq walk 
+	(make-op :name 'walk :pars '(?x ?y ?z); ?f)
+	:preconds '((is_at AG ?x)        
+				(is_on ?x ?z)        
+				(is_on ?y ?z) (point ?y)
+				(navigable ?z))
+                ;;(is_tired_to_degree AG ?f) )
+    :effects '((is_at AG ?y) 
+    		   (not (is_at AG ?x)))
+               ;(is_tired_to_degree AG (+ ?f 0.5))
+               ;(is_tired_to_degree AG (+ ?f (* 0.5 (distance_from+to+on? ?x ?y ?z))))  
+               ;(not (is_tired_to_degree AG ?f)) )
+    :time-required '(distance_from+to+on? ?x ?y ?z)
+    :value (if '(is_at zombie1 ?y) -10 -0.1);(- 3 ?f)
+    )
+)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; With operator walk.actual, AG walks from point ?x to point ?y on road ?z,  
+;; with initial fatigue level ?f, assuming speed of one unit per time step.
+;; This is the `actual' version.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(setq walk.actual 
+	(make-op.actual :name 'walk.actual :pars '(?x ?y ?z); ?f)
+	:startconds '((is_at AG ?x)        
+				  (is_on ?x ?z)        
+				  (is_on ?y ?z) (point y)
+				  (navigable ?z))
+                  ; (is_tired_to_degree AG ?f) )
+    :stopconds '((not (navigable ?z)) 
+    			 (is_at AG ?y) )
+    :deletes '((is_at AG ?#1))
+    		   ;(is_tired_to_degree AG ?#2))
+    :adds '((is_at AG (the_pt+units_from+towards+on_road? (* 1 (elapsed_time?)) ?x ?y ?z))
+    		(is_at AG (the_pt+units_from+towards+on_road? (- (distance_from+to+on? ?x ?y ?z) (* 1 (elapsed_time?))) ?y ?x ?z))
+    	    (is_on (the_pt+units_from+towards+on_road? (* 1 (elapsed_time?)) ?x ?y ?z) ?z)
+    	    (is_on (the_pt+units_from+towards+on_road? (- (distance_from+to+on? ?x ?y ?z) (* 1 (elapsed_time?))) ?y ?x ?z) ?z))
+    		;;(is_tired_to_degree AG (+ ?f (* 0.5 (elapsed_time?)))) )
+    )
+)
+
+;;(getZMoves 'SAA)

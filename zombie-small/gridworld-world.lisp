@@ -1,4 +1,4 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
 ;; Name: gridworld-world.lisp
 ;; This is the sample gridworld you can experiment with to familiarize 
@@ -263,7 +263,7 @@
 (setq *operators* '(walk grab_crowbar get_killed open_door answer_user_ynq answer_user_whq))
 (setq *search-beam*
 ;(list (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) ))
-	(list (cons 3 *operators*) (cons 2 *operators*) (cons 2 *operators*) (cons 2 *operators*) (cons 2 *operators*)))
+	(list (cons 3 *operators*))); (cons 2 *operators*) (cons 2 *operators*) (cons 2 *operators*) (cons 2 *operators*)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -380,6 +380,35 @@
 	)	
 )
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Operator fire.actual is the exogenous fire operator.  As long as there 
+;; is no rain, a spontaneous fire has a 5% chance of starting; once 
+;; it has started, it has a 50% chance of stopping, and it also goes out 
+;; as soon as there is rain.
+;; This is the `actual' version.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(setq zombie-move.actual 
+	(make-op.actual :name 'zombie-move.actual :pars '(?z ?x ?y ?p) ; zombie at ?x
+    :startconds '((is_at ?z ?x) 
+		  (is_zombie ?z) 
+		  ;(= 0 (random 1)) 
+		  (is_on ?x ?p)
+		  (is_on ?y ?p)
+		  (navigable ?p))
+					; 50% chance of zombie walking
+    :starredStopConds '(T) ; 100% chance of stopping after starting
+		       
+    :starredDeletes '((is_at ?z ?x))
+    :starredAdds '((is_at ?z ?y) )
+    :deletes '()
+    :adds '();; (knows AG (whether (is_at ?z ?y)))) 
+    )
+)
+
+;;(defun get_adjacent_squares? (x y z)
+;;  (let (result pt1 pt2 units index1 index2 str)
+ ;;   (if (and (evalFunction Predicate (cons 'point (list x))) (evalFunctionPredicate (cons 'point (list y)))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
