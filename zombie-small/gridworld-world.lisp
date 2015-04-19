@@ -415,7 +415,7 @@
     :starredStopConds '(T) ; 100% chance of stopping after starting
 		       
     :starredDeletes '((is_at ?z ?x))
-    :starredAdds '((is_at ?z ?y) )
+    :starredAdds '((is_at ?z ?y) (knows AG (whether (is_at ?z ?y))))
     :deletes '()
     :adds '();; (knows AG (whether (is_at ?z ?y)))) 
     )
