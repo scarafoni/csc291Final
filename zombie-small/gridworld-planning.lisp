@@ -792,6 +792,7 @@
 ; used equally well for partial instantiation as for full 
 ; instantiation of an operator.
 ;
+  ;(format t "instntiate stuff ~a~%" uni)
 	(when (null uni) (return-from instantiate-op nil))
 	(let* ((name (op-name op))
            (instance (gensym (string name)))

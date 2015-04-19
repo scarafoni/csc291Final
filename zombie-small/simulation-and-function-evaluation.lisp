@@ -732,6 +732,7 @@
 ;; instantiation as for full instantiation of an operator.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun instantiate-op.actual (op.actual uni)
+  (format t "instntiateffffffffffffffffff stuff~~~~%")
 	(if (null uni) (return-from instantiate-op.actual nil))
 	(let*	((name (op.actual-name op.actual))
 			 	 (instance (gensym (string name)))
@@ -804,7 +805,7 @@
 		; Check whether startconds are true of the world and 
 		; set bindings accordingly.
 
-(format t "~% handleZombieWalk ~a ~a" (op.actual-name (eval op-name)) conds-checked)		
+;(format t "~% handleZombieWalk ~a ~a" (op.actual-name (eval op-name)) conds-checked)		
 				
 		(if	(eq 'T conds-checked)
 			(setq bindings '(T))
@@ -823,9 +824,17 @@
 		)
 
 		; Execute the operator only if its startconds are true of the world.
-(format t "bindings ~a~%" bindings)
 		(when (equal bindings '(T)) 
-(format t " on~%")
+          ;; hard coded bindings
+          (setq zloc (second (cdr (car (cdr (gethash '(is_at zombie1 nil) *world-facts*))))))
+          (setq nzloc (cond
+                        ((equal zloc 'sbf) 'saf)
+                        ((equal zloc 'saf) 'sae)
+                        ((equal zloc 'saf) 'sbe)
+                        (t 'sbf)))
+
+          (setq bindings (list (list (cons '?z 'zombie1) (cons '?x zloc) (cons '?y nzloc))))
+          (format t "setp two ~a~%" bindings)
 			(setq instances 
 					(mapcar #'(lambda (u) (instantiate-op.actual op u)) bindings))
 			(setq state-nodes (mapcar #'(lambda (i) 
@@ -902,7 +911,7 @@
 		(dotimes (i queue-length)
 			(setq op (caar (pop *event-queue*)))
 			(setq name (op.actual-name (eval op)))
-(format t "~%HEOEventName ~a ~a" name (length *event-queue*))
+;(format t "~%HEOEventName ~a ~a" name (length *event-queue*))
 			(setq adds (op.actual-adds (eval op)))
 			(setq deletes (op.actual-deletes (eval op)))
 			(setq stadds (op.actual-starredAdds (eval op)))
@@ -949,7 +958,7 @@
 					; Insert into history as completed. (maybe to-do?)
 					; Update the world KB and the agent's KB with starred 
 					; adds and starred deletes.
-(format t "~% HEOExt ~a Is Terminated." name)			
+;(format t "~% HEOExt ~a Is Terminated." name)			
 					(setq stadds (mapcar #'simplify-value stadds))
 					(setq stdeletes (mapcar #'simplify-value stdeletes))
 					(setq stdeletes (set-differencef stdeletes stadds))
@@ -995,7 +1004,7 @@
 		; Handle the external fire operator only if it has not been handled.
 		
 		(when (eq 'NIL is-zombie-handled)
-			(format t "edbug!!!!!!!!!!!!!!!!!!!!!!!!!!!!~%")
+			;(format t "edbug!!!!!!!!!!!!!!!!!!!!!!!!!!!!~%")
 			(handleZombieWalk zombie-move.actual 'NIL)
 		)
 		

@@ -388,14 +388,29 @@
 ;; as soon as there is rain.
 ;; This is the `actual' version.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; (setq zombie-move.actual 
+;; 	(make-op.actual :name 'zombie-move.actual :pars '(?z ?x ?y ?p) ; zombie at ?x
+;;     :startconds '((is_at ?z ?x) 
+;; 		  (is_zombie ?z) 
+;; 		  ;(= 0 (random 1)) 
+;; 		  (is_on ?x ?p)
+;; 		  (is_on ?y ?p)
+;; 		  (navigable ?p))
+;; 					; 50% chance of zombie walking
+;;     :starredStopConds '(T) ; 100% chance of stopping after starting
+		       
+;;     :starredDeletes '((is_at ?z ?x))
+;;     :starredAdds '((is_at ?z ?y) )
+;;     :deletes '()
+;;     :adds '();; (knows AG (whether (is_at ?z ?y)))) 
+;;     )
+;; )
+
 (setq zombie-move.actual 
-	(make-op.actual :name 'zombie-move.actual :pars '(?z ?x ?y ?p) ; zombie at ?x
+	(make-op.actual :name 'zombie-move.actual :pars '(?z ?x ?y) ; zombie at ?x
     :startconds '((is_at ?z ?x) 
-		  (is_zombie ?z) 
+		  (is_zombie ?z)) 
 		  ;(= 0 (random 1)) 
-		  (is_on ?x ?p)
-		  (is_on ?y ?p)
-		  (navigable ?p))
 					; 50% chance of zombie walking
     :starredStopConds '(T) ; 100% chance of stopping after starting
 		       
@@ -405,7 +420,6 @@
     :adds '();; (knows AG (whether (is_at ?z ?y)))) 
     )
 )
-
 ;;(defun get_adjacent_squares? (x y z)
 ;;  (let (result pt1 pt2 units index1 index2 str)
  ;;   (if (and (evalFunction Predicate (cons 'point (list x))) (evalFunctionPredicate (cons 'point (list y)))))))
