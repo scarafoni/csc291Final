@@ -1,3 +1,8 @@
+;; Comment by LKS: This is mostly generic code, but also contains 
+;; domain-specific code for "rain" and "fire" and domain-specific 
+;; functions 'current_time?', 'elapsed_time? and 'price_of?'. 
+;; It also contains the main 'go!' function, and  verbalization
+;; routines.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
 ;; HASHTABLE CODE, SIMULATOR CODE, FACT-CHECKING CODE, and 
@@ -226,7 +231,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; Daphne: Revised 10/11/2012 and fixed a previous error where only one copy of
-;         all terms in tuple was being tallied up, regardless of how many times
+;         all terms in tuple was being tallyed up, regardless of how many times
 ;         the tuple was really being added to table.
 ; Daphne: Revised 10/10/2012 to handle new representation of terms
 (defun add_tuple_to_hashtable (tuple table to-collect-terms)
@@ -538,6 +543,7 @@
 	)
 )
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SIMULATOR CODE 
@@ -549,13 +555,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The measure of total net utility that AG has gained thus far.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defparameter *total-value* 0)
+(defparameter *total-value* (make-array *n-agents* :initial-element 0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The queue of currently active events for the simulator execution engine 
 ;; to process, initialized to the empty list.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defparameter *event-queue* nil)
+(defparameter *event-queue* (make-array *n-agents* :initial-element nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The real clock in the simulated world, initialized to 0 and incremented 
@@ -658,7 +664,7 @@
 ;; action-name. A (generated) name of the new state node is returned.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; Daphne: Revised 10/18/2012 to handle new representation of terms
+; Daphne: Revised 10/9/2012 to handle new representation of terms
 (defun generate-ext-op-state-node (action-name state-node-name)
   (let* ((action (eval action-name))
          (additions (op.actual-adds action))
@@ -669,7 +675,9 @@
          (new-state-node-name (gensym "STATE-NODE"))
          new-local-value
          new-forward-value
-         (new-wff-htable (copy_construct_hashtable old-wff-htable))
+         (new-wff-htable 
+           (copy_construct_hashtable old-wff-htable)
+         )
          (new-terms (state-node-terms state-node))
         )
     ; Remove deletions that are the same as additions.
@@ -692,11 +700,12 @@
     (setq new-forward-value (expected-rewards old-wff-htable))
     
     ; Update the set of wffs to reflect the new state.
-	(setq new-terms (remove_term_list_from_term_list  
+	(setq new-terms (remove_term_list_from_term_list 
 		(remove_list_of_tuples_from_hashtable deletions new-wff-htable 'T) 
 		new-terms)
 	)
-	(setq new-terms (merge_term_list_with_term_list
+	(setq new-terms 
+              (merge_term_list_with_term_list
 		(add_list_of_tuples_to_hashtable additions new-wff-htable 'T)
 		new-terms)
 	)
@@ -788,8 +797,9 @@
 ;; and need not be checked again.  Otherwise, the startconds need be 
 ;; checked.  The startconds must be true in order to execute the operator.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun handleZombieWalk (op-name conds-checked)
-
+;; NOT USED IN BRENNER-NEBEL WORLD, SO I WON'T TRY TO CHANGE ANY AGENT-DEPENDENT
+;; GLOBAL PARAMETERS (LIKE CURR-STATE-NODE) TO ARRAYS. -LKS Oct 2/12
+(defun handleFireAndRain (op-name conds-checked)
 	(let*	((op (eval op-name))
 			 (startconds (op.actual-startconds op))
 			 (adds (op.actual-adds op))
@@ -802,15 +812,12 @@
 			)
 				
 		; Check whether startconds are true of the world and 
-		; set bindings accordingly.
-
-(format t "~% handleZombieWalk ~a ~a" (op.actual-name (eval op-name)) conds-checked)		
+		; set bindings accordingly.	
 				
 		(if	(eq 'T conds-checked)
 			(setq bindings '(T))
-			(progn			 ;prog2 
-			  (setq evaledStartConds (mapcar #'(lambda (x) (evalFunctionPredicateExt x)) startconds))
-				;;(format t "~%evaledStartConds = ~a~%" evaledStartConds) 
+			(progn
+				(setq evaledStartConds (mapcar #'(lambda (x) (evalFunctionPredicateExt x)) startconds))
 				(when (eq 'NIL
 				 		(or 
 				 			(eq 'T (eval (cons 'memb (list (quote 'UNKNOWN) (list 'quote evaledStartConds)))))
@@ -823,9 +830,7 @@
 		)
 
 		; Execute the operator only if its startconds are true of the world.
-(format t "bindings ~a~%" bindings)
-		(when (equal bindings '(T)) 
-(format t " on~%")
+		(when (equal bindings '(T))
 			(setq instances 
 					(mapcar #'(lambda (u) (instantiate-op.actual op u)) bindings))
 			(setq state-nodes (mapcar #'(lambda (i) 
@@ -837,7 +842,7 @@
 					(inclusive-value (car children)))
 			
 			(setq *curr-state-node* (eval (cdar children)))
-		 	(setq adds (mapcar #'simplify-value adds))
+			(setq adds (mapcar #'simplify-value adds))
 			(setq deletes (mapcar #'simplify-value deletes))
 			(setq deletes (set-differencef deletes adds))
 			
@@ -854,7 +859,7 @@
 			(setq event (cons (caar children) new-state))
 			
 			; Place this external event logged with the current real time of the 
-			; simualted world in the queue of active events in the simulated world.
+			; simulated world in the queue of active events in the simulated world.
 			(setq *event-queue* (append *event-queue* 
 						(list (cons event *real-clock*))))
 			
@@ -879,16 +884,17 @@
 ;; instantiated as an active event in *event-queue* only if its startconds 
 ;; hold true in the world KB.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; NOT USED IN BRENNER-NEBEL WORLD, SO I WON'T TRY TO CHANGE ANY AGENT-DEPENDENT
+;; GLOBAL PARAMETERS TO ARRAYS. -LKS Oct 2/12
 ;
-; Daphne: Revised 10/18/2012 to handle new representation of terms
+; Daphne: Revised 10/9/2012 to handle new representation of terms
 ; Daphne: Revised Dec. 2009 to handle new representation of wff-htable
 (defun handleExtOps ()
-	(let	(;;(is-fire 'NIL) 
-		         ;;(is-rain 'NIL) 
-			 ;;(is-fire-handled 'NIL)
-			 ;;(is-rain-handled 'NIL)
-			 (is-zombie-handled 'NIL)
-		         (is-abn 'NIL) 
+	(let	((is-fire 'NIL) 
+			 (is-rain 'NIL) 
+			 (is-fire-handled 'NIL)
+			 (is-rain-handled 'NIL)
+			 (is-abn 'NIL) 
 			 (is-terminated 'NIL) op name new-terms 
 			 (new-wff-htable (state-node-wff-htable *curr-state-node*))
 			 ststopconds stopconds adds deletes stadds stdeletes queue-length
@@ -902,7 +908,6 @@
 		(dotimes (i queue-length)
 			(setq op (caar (pop *event-queue*)))
 			(setq name (op.actual-name (eval op)))
-(format t "~%HEOEventName ~a ~a" name (length *event-queue*))
 			(setq adds (op.actual-adds (eval op)))
 			(setq deletes (op.actual-deletes (eval op)))
 			(setq stadds (op.actual-starredAdds (eval op)))
@@ -912,30 +917,34 @@
 			(setq is-abn 'NIL)
 			(setq is-terminated 'NIL)
 			
-			(if (equal name 'zombie-move.actual)
+			(if (equal name 'fire.actual)
 				(progn 
-				;;	(setq is-fire 'T)
-					(setq is-zombie-handled 'T)
-				;;	(setq is-rain 'NIL)
+					(setq is-fire 'T)
+					(setq is-fire-handled 'T)
+					(setq is-rain 'NIL)
 				)
-				;;(when (equal name 'rain.actual)
-				;;	(setq is-rain 'T)
-				;;	(setq is-rain-handled 'T)
-				;;	(setq is-fire 'NIL)
-				;;)
+				(when (equal name 'rain.actual)
+					(setq is-rain 'T)
+					(setq is-rain-handled 'T)
+					(setq is-fire 'NIL)
+				)
 			)
 			
 			; Evaluate whether the termination conditions of the current 
 			; active event are true in the world KB.
-			(if (eq 'T 
-							(eval (cons 'memb (list (quote 'T) 
-							(list 'quote (mapcar #'(lambda (x) (evalFunctionPredicateExt x)) ststopconds))
+			(if (eq 'T (eval (cons 'memb (list (quote 'T) 
+                                                      (list 'quote 
+                              (mapcar #'(lambda (x) 
+                                         (evalFunctionPredicateExt x)) ststopconds))
 							)))
 					)
 					(setq is-abn 'T)
 					(when (eq 'T 
-								(eval (cons 'memb (list (quote 'T) 
-								(list 'quote (mapcar #'(lambda (x) (evalFunctionPredicateExt x)) stopconds))
+                                               (eval (cons 'memb (list (quote 'T) 
+								  (list 'quote 
+                                                                   (mapcar #'(lambda (x) 
+                                                                              (evalFunctionPredicateExt x)) 
+                                                                            stopconds))
 								)))
 								)
 								(setq is-terminated 'T)
@@ -948,8 +957,7 @@
 				(progn; start of then clause of applying starredAdds and starredDeletes
 					; Insert into history as completed. (maybe to-do?)
 					; Update the world KB and the agent's KB with starred 
-					; adds and starred deletes.
-(format t "~% HEOExt ~a Is Terminated." name)			
+					; adds and starred deletes.	
 					(setq stadds (mapcar #'simplify-value stadds))
 					(setq stdeletes (mapcar #'simplify-value stdeletes))
 					(setq stdeletes (set-differencef stdeletes stadds))
@@ -981,28 +989,26 @@
 				
 				; Extend the current active event for another time step since 
 				; none of its termination conditions are true in the world KB.
-				;;(if	(eq 'T is-fire)
-				;;	(handleFireAndRain fire.actual 'T)
-				;;	(when (eq 'T is-rain)
-				;;		(handleFireAndRain rain.actual 'T)
-				;;	)
-				;;)
+				(if	(eq 'T is-fire)
+					(handleFireAndRain fire.actual 'T)
+					(when (eq 'T is-rain)
+						(handleFireAndRain rain.actual 'T)
+					)
+				)
 				
 			); end of if-then-else clause for 
 			
 		); end of processing active external events in *event-queue*
 
 		; Handle the external fire operator only if it has not been handled.
-		
-		(when (eq 'NIL is-zombie-handled)
-			(format t "edbug!!!!!!!!!!!!!!!!!!!!!!!!!!!!~%")
-			(handleZombieWalk zombie-move.actual 'NIL)
+		(when (eq 'NIL is-fire-handled)
+			(handleFireAndRain fire.actual 'NIL)
 		)
 		
 		; Handle the external rain operator only if it has not been handled.
-		;;(when (eq 'NIL is-rain-handled)
-		;;	(handleFireAndRain rain.actual 'NIL)
-		;;)
+		(when (eq 'NIL is-rain-handled)
+			(handleFireAndRain rain.actual 'NIL)
+		)
 	)
 ); end of handleExtOps
 
@@ -1018,7 +1024,7 @@
 ;; This function evaluates the function or predicate given by arg wff 
 ;; using the agent's KB and returns the result of the evaluation.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun evalFunctionPredicate (wff)
+(defun evalFunctionPredicate (wff j) ; jth agent -- LKS, Oct 2/12
 	(let ((wf wff))
 		(when (listp wff)
 			(setq wf (mapcar #'simplify-value wff))
@@ -1029,7 +1035,7 @@
 			((and (listp wf) (evaluable-func (car wf)))
 				(apply (car wf) (cdr wf))
 			)
-			(T (check-fact-in-kb wf (state-node-wff-htable *curr-state-node*))
+			(T (check-fact-in-kb wf (state-node-wff-htable (aref *curr-state-node* j)) j)
 			)
 		)
 	)
@@ -1048,7 +1054,8 @@
 			((and (listp wf) (evaluable-func (car wf)))
 				(apply (car wf) (cdr wf))
 			)
-			(T (check-fact-in-kb wf *world-facts* 'T)
+			(T (check-fact-in-kb wf *world-facts* 0 'T)
+                                                       ;~~~~~~~~ 1st agent-LKS
 			)
 		)
 	)
@@ -1073,7 +1080,8 @@
 ;; called by functions evalFunctionPredicateExt, evalFunctionPredicate, 
 ;; and 4.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun check-fact-in-kb (wff kb &OPTIONAL (is-world-kb 'NIL)); Revised Dec. 2009 by Daphne Liu
+(defun check-fact-in-kb (wff kb j &OPTIONAL (is-world-kb 'NIL)); Revised Dec. 2009 by Daphne Liu
+     ; OCT 2/12: AGENT INDEX j ADDED -- LKS
 	(let	((answer 'NIL)
 			)
 			
@@ -1112,7 +1120,7 @@
 					)
 					; Handle the case of this +ve, not in kb, wff being epistemic.
 					((eq first-in-wff 'knows)
-							(setq answer (check-epistemic-fact-in-kb wff kb is-world-kb))
+							(setq answer (check-epistemic-fact-in-kb wff kb j is-world-kb))
 					)
 					; Handle the case of this nonepistemic, +ve wff not being in kb.
 					(t
@@ -1122,7 +1130,7 @@
 								(setq subj (second wff))
 								(if (eq subj 'AG)
 									(setq answer 'NIL)
-									(if (member subj *visited-objects*)
+									(if (member subj (aref *visited-objects* j))
 										(if (member first-in-wff *occluded-preds*)
 											(setq answer 'UNKNOWN)
 											(setq answer 'NIL)
@@ -1149,7 +1157,8 @@
 ;; called by function check-fact-in-kb. Arg wff is assumed to be a non-atom,
 ;; a non-empty list, and an epistemic prediation.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun check-epistemic-fact-in-kb (wff kb &OPTIONAL (is-world-kb 'NIL))
+(defun check-epistemic-fact-in-kb (wff kb j &OPTIONAL (is-world-kb 'NIL))
+  ; Oct 2/12: agent index j added -LKS
 	(let 	((answer 'NIL)
 			 (wff-key (convert_pred_to_hashkey wff))
 			 ;(is_agent_kb (equal kb (state-node-wff-htable *curr-state-node*)))
@@ -1165,7 +1174,7 @@
 						)
 						((atom third-in-wff)
 							(if (eq subj 'AG)
-								(setq answer (member third-in-wff *visited-objects*))
+								(setq answer (member third-in-wff (aref *visited-objects* j)))
 								(if is-world-kb
 									(setq answer 'NIL)
 									(setq answer 'UNKNOWN) ;is_agent_kb is_agent_contemplated_kb
@@ -1178,10 +1187,10 @@
 								(if is-world-kb
 									(setq answer 
 										(and (eq subj 'AG) 
-											 (not (eq 'UNKNOWN (check-fact-in-kb (second third-in-wff) (state-node-wff-htable *curr-state-node*))))))
+											 (not (eq 'UNKNOWN (check-fact-in-kb (second third-in-wff) (state-node-wff-htable (aref *curr-state-node* j)) j)))))
 									(if (eq subj 'AG)
 										(setq answer (not (eq 'UNKNOWN 
-															  (check-fact-in-kb (second third-in-wff) kb))))
+															  (check-fact-in-kb (second third-in-wff) kb j))))
 										(setq answer 'UNKNOWN)
 									)
 								)
@@ -1189,20 +1198,20 @@
 						)
 						((eq 'that (car third-in-wff))
 							(if (eq subj (second (second third-in-wff)))
-								(setq answer (eq 'T (check-fact-in-kb (second third-in-wff) kb is-world-kb)))
+								(setq answer (eq 'T (check-fact-in-kb (second third-in-wff) kb j is-world-kb)))
 								
 								(if (eq subj 'AG)
 									(prog2
-										(setq answer (eq 'T (check-fact-in-kb (second third-in-wff) kb is-world-kb)))
+										(setq answer (eq 'T (check-fact-in-kb (second third-in-wff) kb j is-world-kb)))
 										(when is-world-kb
 											(setq answer (and answer
-															  (eq 'T (check-fact-in-kb (second third-in-wff) (state-node-wff-htable *curr-state-node*)))))
+															  (eq 'T (check-fact-in-kb (second third-in-wff) (state-node-wff-htable (aref *curr-state-node* j)) j))))
 											
 										)
 									)
 									(if is-world-kb
 										(setq answer 'NIL) 
-										(if (eq 'T (check-fact-in-kb (second third-in-wff) kb))
+										(if (eq 'T (check-fact-in-kb (second third-in-wff) kb j))
 											(setq answer 'UNKNOWN)
 											(setq answer 'NIL)
 										)
@@ -1219,7 +1228,10 @@
 	)
 ); end of check-epistemic-fact-in-kb
 
-(defvar *is-actual* nil)
+; LKS: *is-actual* was then used as a local variable in 'check-yn-fact-in-kb',
+;      but it appears to play no role anywhere, so I've deleted it in both
+;      places. Ot 3/12
+; (defparameter *is-actual* nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Function check-yn-fact-in-kb returns a well-formed formula indicating  
@@ -1229,15 +1241,13 @@
 ;; is called by functions answer_to_ynq?, answer_to_ynq.actual?, and 
 ;; peer-into-state.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun check-yn-fact-in-kb (is_actual wf kb &OPTIONAL (is-world-kb 'NIL))
+(defun check-yn-fact-in-kb (is_actual wf kb j &OPTIONAL (is-world-kb 'NIL))
+       ; Oct 2/12: agent index j added; -LKS
 	(let* (;(is-world-kb (equal kb *world-facts*))
-		  (*is-actual* is_actual)
-		  (ans (check-fact-in-kb wf kb is-world-kb))
+		  ;(*is-actual* is_actual); LKS: THIS IS WEIRD - LOCAL OR GLOBAL??!!
+		  (ans (check-fact-in-kb wf kb j is-world-kb))
 		 )
-
-;(format t "wff is ~a ~%" wf)
-(setq *is-actual* 'NIL)
-
+		;(setq *is-actual* 'NIL); not used, so I deleted it. -LKS
 
 		(cond	((eq ans 'T)
 					(setq ans wf)
@@ -1247,8 +1257,7 @@
 				)
 				(t	(setq ans 'UNKNOWN))
 		)
-		
-;(format t "ans is ~a ~%" ans)		
+			
 		(when (eq is_actual 't)
 			(if (eq ans 'UNKNOWN)
 				(prog2	(verbalize ans wf)
@@ -1276,11 +1285,13 @@
 ;; is_actual is true.  This function is called by functions answer_to_whq?, 
 ;; answer_to_whq.actual?, and peer-into-state.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun check-whq-answer-in-kb (is_actual wf kb)
+;; OCT 2/12: QA ISN'T NEEDED FOR THE BRENNER-NEBEL MULTIAGENT WORLD;
+;; I'VE MADE SOME CHANGES, BUT IT SHOULDN'T MATTER. -LKS
+(defun check-whq-answer-in-kb (is_actual wf kb j)
+       ; Oct 2/12 -- agent index j added. -LKS
 	(let 	((unifiers '()) (result-wffs '()) (is_negated 'NIL) (wff wf) 
-			 (is_agent_kb (equal kb (state-node-wff-htable *curr-state-node*)))
-			)
-;(format t "wff = ~%~A~%" wff)				
+			 (is_agent_kb (equal kb (state-node-wff-htable (aref *curr-state-node* j))))
+			)			
 		
 			(when (eq (car wf) 'not)
 				(setq wff (second wf))
@@ -1298,7 +1309,6 @@
 			(setq unifiers (all-bindings-of-posgoal-to-fact-htable wff kb))
 				
 			(setq unifiers (remove-duplicates unifiers :test #'equal))
-;(format t "unifiers = ~%~A~%" unifiers)				
 			(if (null unifiers)
 				(when (eq is_actual 'T)
 					(if is_agent_kb
@@ -1330,7 +1340,6 @@
 							)
 						)
 					)
-;(setq result-wffs (nth (random (length result-wffs)) result-wffs))
 				)
 			)
 			result-wffs
@@ -1366,14 +1375,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; Daphne: Revised 10/9/2012 to handle new representation of terms
-(defun listen! ()
-	(let ((user-input 'NIL) (lst 'NIL) (implied-facts 'NIL) 
+(defun listen! (agent); Oct 2/12: agent argument added -LKS
+                      ; But actually this isn't needed for the multi-agent world
+	(let ((j (gethash agent *agent-goal-indices*))
+              (user-input 'NIL) (lst 'NIL) (implied-facts 'NIL) 
 		  (tell-lst 'NIL) (neglst 'NIL) curr-tell curr-ans
-		  (new-terms (state-node-terms *curr-state-node*))
+		  (new-terms (state-node-terms (aref *curr-state-node* j)))
 		  user-input-intention
-		  (new-wff-htable (state-node-wff-htable *curr-state-node*))
+		  (new-wff-htable (state-node-wff-htable (aref *curr-state-node* j)))
 		 )
-		(format t "You're welcome to ask AG a question or tell it a fact.~%")
+		(format t "You're welcome to ask AG a question or tell him a fact.~%")
 		(setq user-input (read))
 		(setq user-input (mapcar #'(lambda(y) (list (first y) (parseIntoPred (second y)))) user-input))
 		(when (and (listp user-input) (not (null user-input)))
@@ -1399,7 +1410,7 @@
 			
 			(while tell-lst
 				(setq curr-tell (pop tell-lst))
-				(setq curr-ans (check-yn-fact-in-kb 'NIL curr-tell *world-facts* 'T))
+				(setq curr-ans (check-yn-fact-in-kb 'NIL curr-tell j *world-facts* 'T))
 				(if (equal curr-ans curr-tell)
 					(prog2
 						(push (list 'tells 'USER (list 'that curr-tell)) lst)
@@ -1423,7 +1434,6 @@
 			)
 			
 			(setq lst (nreverse lst))
-			;(setq *protected-facts* (set-differencef *protected-facts* neglst))
 			(remove_list_of_tuples_from_hashtable neglst *protected-facts* 'NIL)
 			
 			(add_list_of_tuples_to_hashtable lst *protected-facts* 'NIL)
@@ -1439,9 +1449,10 @@
 				new-terms)
 			)
 			
-			(setf (state-node-terms *curr-state-node*) new-terms)
-			(setq new-state (copy_construct_hashtable (notice-new-local-facts *curr-state-node*)))
-			(setq *states* (cons new-state (cdr *states*)))
+			(setf (state-node-terms (aref *curr-state-node* j)) new-terms)
+			(setq new-state (copy_construct_hashtable (notice-new-local-facts (aref *curr-state-node* j) agent)))
+			(setf (aref *states* j) 
+                              (cons new-state (cdr (aref *states* j))))
 		)
 		T
 	)
@@ -1458,12 +1469,13 @@
 ;; is translated into an English sentence(s) and printed. This top-level 
 ;; function can be invoked directly at the prompt by the user.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun peer-into-state (ques)
+(defun peer-into-state (ques j); Oct 2/12: agent index added -LKS
+                               ; But this isn't needed for the multiagent world.
 	(cond 	((eq (car ques) 'YNQ)
-				(check-yn-fact-in-kb 'T (second ques) (state-node-wff-htable *curr-state-node*))
+				(check-yn-fact-in-kb 'T (second ques) j (state-node-wff-htable (aref *curr-state-node* j)))
 			)
 			((eq (car ques) 'WHQ)
-				(check-whq-answer-in-kb 'T (second ques) (state-node-wff-htable *curr-state-node*))
+				(check-whq-answer-in-kb 'T (second ques) j (state-node-wff-htable (aref *curr-state-node* j)))
 			)
 	)
 ); end of peer-into-state
@@ -1518,13 +1530,10 @@
 	(let* (answer result-lst-strs
 		   (result-str "") posn)
 		
-;(format t "wff simplify-string is ~a ~a ~%" wff print-var)		
 		(if (eq 'T print-var)
 			(setq answer (verbalize-wff 'NIL (replaceVarWithAnything wff 'ANYTHING-non-AG) 'T)) 
 			(setq answer (verbalize-wff 'NIL wff 'T)) 
 		)
-
-;(format t "answer simplify-string is ~a~%" answer)
 		
 		(setq result-lst-strs (mapcar #'(lambda(x) (write-to-string x)) answer))
 		   
@@ -1538,7 +1547,6 @@
 			(setq posn (search "IT IS NOT THE CASE THAT IT IS NOT THE CASE THAT " result-str))
 		)
 		
-;(format t "~%~%~A~%" result-str)
 		result-str
 	)
 
