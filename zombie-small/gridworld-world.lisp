@@ -130,6 +130,7 @@
 (def-object 'crowbar '(can_open_door))
 (def-object 'door '(is_inanimate is_door is_closed))
 (def-object 'zombie '(is_smelly is_zombie is_fat))
+(def-object 'chicken '(is_tasty))
 
 ;(def-object 'expert '(is_animate can_talk))
 ;(def-object 'instrument '(is_inanimate is_playable))
@@ -145,15 +146,18 @@
   nil ; no associated-things
   ; current facts
   '((is_scared_to_degree AG 4.0)
+    (is_hungry AG)
     (is_at door1 SFE)
     (is_at crowbar1 SCD)
     (can_open_door crowbar1)
     (can_open_door crowbar2)
     (is_at crowbar2 SFB)
     (is_at zombie1 SBF)
+    (is_at chicken1 SBC)
     (is_closed door1)
     (is_door door1)
     (is_zombie zombie1)
+    (is_tasty chicken1)
     ;;(is_hungry_to_degree AG 4.0)
 	;(is_thirsty_to_degree AG 2.0)
     ;;(is_tired_to_degree AG 0.0)
@@ -178,6 +182,7 @@
   ; propositional attitudes
   '((knows AG (whether (can_open_door crowbar1))) 
     (knows AG (whether (is_door door1)))
+    (knows AG (that (is_tasty chicken1)))
     ;;(knows AG (whether (is_playable piano2)))
     ;(knows AG (whether (is_edible pizza3)))
     ;(knows AG (that (knows guru (whether (is_potable juice3))))) 
@@ -206,7 +211,14 @@
               nil
 )
 
-(place-object 'zombie1 'zombie 'SBF 0
+(place-object 'chicken1 'chicken 'SBC 0
+	      nil
+	      ;current facts
+	      '((is_tasty chicken1))
+	      nil
+)
+
+(place-object 'zombie1 'zombie 'SBF 0;'SBF 0
 		nil
 		;current facts
 		'((is_zombie zombie1))
@@ -260,10 +272,10 @@
 ; "gridworld-definitions.lisp".
 
 ;; (setq *operators* '(walk eat get_killed answer_user_ynq answer_user_whq sleep drink ask+whether play))
-(setq *operators* '(walk grab_crowbar get_killed open_door answer_user_ynq answer_user_whq))
+(setq *operators* '(eat_chicken wait walk grab_crowbar get_killed open_door answer_user_ynq answer_user_whq))
 (setq *search-beam*
 ;(list (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) ))
-	(list (cons 3 *operators*))); (cons 2 *operators*) (cons 2 *operators*) (cons 2 *operators*) (cons 2 *operators*)))
+	(list (cons 3 *operators*) (cons 4 *operators*) ));(cons 2 *operators*) (cons 2 *operators*) (cons 2 *operators*)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -475,7 +487,8 @@
 	:preconds '( (not (has AG ?x)) 
 				 (is_at AG ?y) 
 				 (is_at ?x ?y) 
-				 (can_open_door ?x))
+				 (can_open_door ?x)
+				 (not (is_dead AG)))
 				 ;;(knows AG (whether (can_open_door ?x))))
 	:effects '( (is_scared_to_degree AG 2.0) (has AG ?x))
 	:time-required 1
@@ -488,12 +501,41 @@
 	:startconds '((not (has AG ?x)) 
 				 (is_at AG ?y) 
 				 (is_at ?x ?y) 
-				 (can_open_door ?x))
+				 (can_open_door ?x)
+				 (not (is_dead AG)))
     :stopconds '((has AG ?x))
 	:deletes '()
     :adds '((has AG ?x))
 	)
 )
+
+(setq eat_chicken
+      (make-op :name 'eat_chicken :pars '(?x ?c)
+	       :preconds '(
+			   (is_hungry AG)
+			   (is_at AG ?x)
+			   (is_at ?c ?x)
+			   (is_tasty ?c)
+			   (not (is_dead AG)))
+	       :effects '((is_full AG))
+	       :time-required 1
+	       :value '200
+	       )
+)
+
+(setq eat_chicken.actual
+      (make-op.actual :name 'eat_chicken.actual :pars '(?x ?c)
+		      :startconds '(
+			   (is_hungry AG)
+			   (is_at AG ?x)
+			   (is_at ?c ?x)
+			   (is_tasty ?c)
+			   (not (is_dead AG)))
+		      :stopconds '((is_full AG) (not (is_hungry AG)))
+		      :deletes '((is_hungry AG) (is_at ?c ?x))
+		      :adds '((is_full AG))
+		      )
+      )
 
 ;; opens a door
 (setq open_door
@@ -504,7 +546,8 @@
                 (can_open_door ?c)
                 (is_at AG ?y) 
                 (is_at ?x ?y) 
-                (is_door ?x))
+                (is_door ?x)
+		(not (is_dead AG)))
 	:effects '( (is_scared_to_degree AG 0.0) (is_safe AG) );(is_open ?x))
 	:time-required 1
 	:value '50
@@ -517,7 +560,8 @@
                   (is_closed ?x)
                   (is_at AG ?y) 
                   (is_at ?x ?y) 
-                  (can_open_door ?c))
+                  (can_open_door ?c)
+		  (not (is_dead AG)))
     :stopconds '((is_open ?x))
 	:deletes '()
     :adds '((is_safe AG) (is_open ?x))
@@ -550,6 +594,27 @@
 )
 
 
+
+(setq wait
+      (make-op :name 'wait :pars '(?x)
+	       :preconds '((is_at AG ?x)
+			   (not (is_at zombie1 ?x))
+			   (not (is_dead AG)))
+	       :effects '((is_at AG ?x))
+	       :time-required '(1)
+	       :value '-5
+	       )
+)
+
+(setq wait.actual
+      (make-op.actual :name 'wait.actual :pars '(?x)
+		      :startconds '((is_at AG ?x) (not (is_at zombie1 ?x)) (not (is_dead AG)))
+		      :stopconds '((is_at AG ?x))
+		      :deletes '()
+		      :adds '()
+)
+)
+
       
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -559,18 +624,22 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (setq walk 
 	(make-op :name 'walk :pars '(?x ?y ?z); ?f)
-	:preconds '((is_at AG ?x)        
+	:preconds '((is_at AG ?x)
+		    (not (is_at zombie1 ?x))
+		    (not (is_at zombie1 ?y))
 				(is_on ?x ?z)        
 				(is_on ?y ?z) (point ?y)
-				(navigable ?z))
+				(navigable ?z)
+				(not (is_dead AG)))
                 ;;(is_tired_to_degree AG ?f) )
     :effects '((is_at AG ?y) 
-    		   (not (is_at AG ?x)))
+	       (if (evalFunctionPredicate (list 'is_at 'zombie1 ?x))
+		   '(is_dead AG) '()))
                ;(is_tired_to_degree AG (+ ?f 0.5))
                ;(is_tired_to_degree AG (+ ?f (* 0.5 (distance_from+to+on? ?x ?y ?z))))  
                ;(not (is_tired_to_degree AG ?f)) )
     :time-required '(distance_from+to+on? ?x ?y ?z)
-    :value (if '(is_at zombie1 ?y) -10 -0.1);(- 3 ?f)
+    :value '-1;(if (evalFunctionPredicate (list 'is_at 'zombie1 ?y)) -10 1);(- 3 ?f)
     )
 )
 
@@ -582,10 +651,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (setq walk.actual 
 	(make-op.actual :name 'walk.actual :pars '(?x ?y ?z); ?f)
-	:startconds '((is_at AG ?x)        
+	:startconds '((is_at AG ?x)     
+		      (not (is_at zombie1 ?x))
 				  (is_on ?x ?z)        
 				  (is_on ?y ?z) (point y)
-				  (navigable ?z))
+				  (navigable ?z)
+				  (not (is_dead AG)))
                   ; (is_tired_to_degree AG ?f) )
     :stopconds '((not (navigable ?z)) 
     			 (is_at AG ?y) )
@@ -594,7 +665,9 @@
     :adds '((is_at AG (the_pt+units_from+towards+on_road? (* 1 (elapsed_time?)) ?x ?y ?z))
     		(is_at AG (the_pt+units_from+towards+on_road? (- (distance_from+to+on? ?x ?y ?z) (* 1 (elapsed_time?))) ?y ?x ?z))
     	    (is_on (the_pt+units_from+towards+on_road? (* 1 (elapsed_time?)) ?x ?y ?z) ?z)
-    	    (is_on (the_pt+units_from+towards+on_road? (- (distance_from+to+on? ?x ?y ?z) (* 1 (elapsed_time?))) ?y ?x ?z) ?z))
+    	    (is_on (the_pt+units_from+towards+on_road? (- (distance_from+to+on? ?x ?y ?z) (* 1 (elapsed_time?))) ?y ?x ?z) ?z)
+	    (if (evalFunctionPredicate (list 'is_at 'zombie1 ?y))
+	      '(is_dead AG) '()))
     		;;(is_tired_to_degree AG (+ ?f (* 0.5 (elapsed_time?)))) )
     )
 )
