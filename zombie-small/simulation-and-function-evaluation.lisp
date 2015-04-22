@@ -732,7 +732,6 @@
 ;; instantiation as for full instantiation of an operator.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun instantiate-op.actual (op.actual uni)
-  (format t "instntiateffffffffffffffffff stuff~~~~%")
 	(if (null uni) (return-from instantiate-op.actual nil))
 	(let*	((name (op.actual-name op.actual))
 			 	 (instance (gensym (string name)))
@@ -848,7 +847,6 @@
                         (t 'sbf)))
 	  (if (equal nzloc (caddr (cdr (gethash '(is_at AG nil) *world-facts*)))) (setq (gethash '(is_dead AG) *world-facts*) '(is_dead AG)))
           (setq bindings (list (list (cons '?z 'zombie1) (cons '?x zloc) (cons '?y nzloc))))
-          (format t "setp two ~a~%" bindings)
 			(setq instances 
 					(mapcar #'(lambda (u) (instantiate-op.actual op u)) bindings))
 			(setq state-nodes (mapcar #'(lambda (i) 

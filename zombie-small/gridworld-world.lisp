@@ -275,7 +275,7 @@
 (setq *operators* '(eat_chicken wait walk grab_crowbar get_killed open_door answer_user_ynq answer_user_whq))
 (setq *search-beam*
 ;(list (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) (cons 3 *operators*) ))
-	(list (cons 3 *operators*) (cons 4 *operators*) ));(cons 2 *operators*) (cons 2 *operators*) (cons 2 *operators*)))
+	(list (cons 3 *operators*) (cons 2 *operators*) (cons 2 *operators*) (cons 2 *operators*)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
